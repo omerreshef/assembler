@@ -2,6 +2,14 @@
 #include <stdbool.h>
 
 #define MAX_OPCODE_LEN 5
+#define OPCODE_NAME_MAX_LENGTH 8
+
+typedef struct opcode_t {
+    char opcode_name[OPCODE_NAME_MAX_LENGTH];
+    int opcode_operands_number;
+    int opcode;
+    int funct;
+} opcode_t;
 
 /**
  * Check if the given name is a valid instruction.
@@ -38,12 +46,12 @@ RC_t ARCHITECTURE__is_register(char *name, bool *is_register);
 RC_t ARCHITECTURE__get_register_value(char *name, int *register_value);
 
 /** 
- * Get the operands number of a given opcode
+ * Get the details of a given opcode.
  * @param opcode_name The name of the opcode.
- * @param opcode_size Pointer to an integer that will be set to the operands number.
- * On success, sets *operands_number and returns SUCCESS.
+ * @param opcode_details Pointer to an opcode_t to store the values in.
+ * On success, sets *opcode_details and returns SUCCESS.
  */
-RC_t ARCHITECTURE__get_opcode_operands_number(char *opcode_name, int *operands_number);
+RC_t ARCHITECTURE__get_opcode_details(char *opcode_name, opcode_t *opcode_details);
 
 /**
  * Get the size (in words) of the given opcode.

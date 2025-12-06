@@ -38,22 +38,14 @@ RC_t line_parser__parse_instruction_operands(const char* opcode, const char* arg
 
         first_operand_length = (int)(comma_position - arguments);
         parsed_line->operands[0] = malloc(first_operand_length + 1);
-        if (parsed_line->operands[0] == NULL)
-        {
-            return_code = LINE_PARSER__PARSE_INSTRUCTION_OPERANDS__ALLOCATION_ERROR;
-            goto Exit;
-        }
+        EXIT_IF_NULL(parsed_line->operands[0], LINE_PARSER__PARSE_INSTRUCTION_OPERANDS__ALLOCATION_ERROR);
         (void)memset(parsed_line->operands[0], '\0', first_operand_length + 1);
         (void)memcpy(parsed_line->operands[0], arguments, first_operand_length);
 
         second_operand_start = comma_position + 1;
         second_operand_length = (int)strlen(second_operand_start);
         parsed_line->operands[1] = malloc(second_operand_length + 1);
-        if (parsed_line->operands[1] == NULL)
-        {
-            return_code = LINE_PARSER__PARSE_INSTRUCTION_OPERANDS__ALLOCATION_ERROR;
-            goto Exit;
-        }
+        EXIT_IF_NULL(parsed_line->operands[1], LINE_PARSER__PARSE_INSTRUCTION_OPERANDS__ALLOCATION_ERROR);
         (void)memset(parsed_line->operands[1], '\0', second_operand_length + 1);
         (void)memcpy(parsed_line->operands[1], second_operand_start, second_operand_length);
     }
@@ -72,6 +64,7 @@ RC_t line_parser__parse_instruction_operands(const char* opcode, const char* arg
         /* One operand expected */
         int operand_length = (int)strlen(arguments);
         parsed_line->operands[0] = malloc(operand_length + 1);
+        EXIT_IF_NULL(parsed_line->operands[0], LINE_PARSER__PARSE_INSTRUCTION_OPERANDS__ALLOCATION_ERROR);
         (void)memset(parsed_line->operands[0], '\0', operand_length + 1);
         (void)memcpy(parsed_line->operands[0], arguments, operand_length);
     } else if (
@@ -139,20 +132,11 @@ RC_t line_parser__parse_data_numbers(char* data, parsed_line_t *parsed_line)
     }
 
     numbers = malloc((numbers_amount) * sizeof(int));
-
-    if (numbers == NULL)
-    {
-        return_code = LINE_PARSER__PARSE_DATA_NUMBERS__ALLOCATION_ERROR;
-        goto Exit;
-    }
+    EXIT_IF_NULL(numbers, LINE_PARSER__PARSE_DATA_NUMBERS__ALLOCATION_ERROR);
 
     numbers_copy = malloc(strlen(data) + NULL_TERMINATOR_SIZE);
+    EXIT_IF_NULL(numbers_copy, LINE_PARSER__PARSE_DATA_NUMBERS__ALLOCATION_ERROR);
     memset(numbers_copy, '\0', strlen(data) + NULL_TERMINATOR_SIZE);
-    if (numbers_copy == NULL)
-    {
-        return_code = LINE_PARSER__PARSE_DATA_NUMBERS__ALLOCATION_ERROR;
-        goto Exit;
-    }
     /* Dont copy the quotation character in the end of the string. Just the numbers */
     memcpy(numbers_copy, data, strlen(data) - QUOTATION_CHARACTER_LEN);
 
@@ -220,7 +204,8 @@ RC_t LINE_PARSER__parse_line(const char *line_buffer, parsed_line_t *parsed_line
     if (label_end != NULL)
     {
         label_length = (int)(label_end - line_pointer);
-        parsed_line->label = malloc(label_length + 1);;
+        parsed_line->label = malloc(label_length + 1);
+        EXIT_IF_NULL(parsed_line->label, LINE_PARSER__PARSE_LINE__ALLOCATION_ERROR);
         (void)memset(parsed_line->label, '\0', label_length + 1);
         (void)memcpy(parsed_line->label, line_pointer, label_length);
         line_pointer += label_length + LABEL_SKIP_LENGTH;
@@ -248,6 +233,7 @@ RC_t LINE_PARSER__parse_line(const char *line_buffer, parsed_line_t *parsed_line
         string_end = strchr(line_pointer, '\"');
         string_length = (int)(string_end - line_pointer);
         parsed_line->string = malloc(string_length + 1);
+        EXIT_IF_NULL(parsed_line->string, LINE_PARSER__PARSE_LINE__ALLOCATION_ERROR);
         (void)memset(parsed_line->string, '\0', string_length + 1);
         (void)memcpy(parsed_line->string, line_pointer, string_length);
 
@@ -263,6 +249,7 @@ RC_t LINE_PARSER__parse_line(const char *line_buffer, parsed_line_t *parsed_line
         entry_name = strchr(line_pointer, ' ');
         entry_name++; /* Skip space character to the start if the entry name*/
         parsed_line->entry_name = malloc(strlen(entry_name) + NULL_TERMINATOR_SIZE);
+        EXIT_IF_NULL(parsed_line->entry_name, LINE_PARSER__PARSE_LINE__ALLOCATION_ERROR);
         (void)memcpy(parsed_line->entry_name, entry_name, strlen(entry_name));
     }
     else if (strstr(line_pointer, ".extern"))
@@ -276,6 +263,7 @@ RC_t LINE_PARSER__parse_line(const char *line_buffer, parsed_line_t *parsed_line
         extern_name = strchr(line_pointer, ' ');
         extern_name++; /* Skip space character to the start if the extern name*/
         parsed_line->extern_name = malloc(strlen(extern_name) + NULL_TERMINATOR_SIZE);
+        EXIT_IF_NULL(parsed_line->extern_name, LINE_PARSER__PARSE_LINE__ALLOCATION_ERROR);
         (void)memcpy(parsed_line->extern_name, extern_name, strlen(extern_name));
     } 
     else 
@@ -297,6 +285,7 @@ RC_t LINE_PARSER__parse_line(const char *line_buffer, parsed_line_t *parsed_line
         }
 
         parsed_line->opcode = malloc(opcode_length + NULL_TERMINATOR_SIZE);
+        EXIT_IF_NULL(parsed_line->opcode, LINE_PARSER__PARSE_LINE__ALLOCATION_ERROR);
         (void)memset(parsed_line->opcode, '\0', opcode_length + NULL_TERMINATOR_SIZE);
         (void)memcpy(parsed_line->opcode, line_pointer, opcode_length);
 

@@ -37,7 +37,7 @@ Exit:
     return return_code;
 }
 
-RC_t first_pass__detect_entries_duplication(char *entries_list[MAX_ENTRIES], int entries_amount)
+RC_t first_pass__detect_entries_duplication(program_entries_t *entries_list, int entries_amount)
 {
     RC_t return_code = UNINITIALIZED;
     int i = 0;
@@ -53,7 +53,7 @@ RC_t first_pass__detect_entries_duplication(char *entries_list[MAX_ENTRIES], int
     {
         for (j = 0; j < entries_amount; j++)
         {
-            if (i != j && strcmp(entries_list[i], entries_list[j]) == 0)
+            if (i != j && strcmp(entries_list->entries[i].entry_name, entries_list->entries[j].entry_name) == 0)
             {
                 return_code = FIRST_PASS__DETECT_ENTRIES_DUPLICATION__FOUND_DUPLICATION;
                 goto Exit;
@@ -65,7 +65,7 @@ Exit:
     return return_code;
 }
 
-RC_t FIRST_PASS__process_input_file(char *input_file_path, int *instruction_counter, int *data_counter, parsed_line_t *parsed_lines, symbol_table_t *symbol_table, char *entries_list[MAX_ENTRIES])
+RC_t FIRST_PASS__process_input_file(char *input_file_path, int *instruction_counter, int *data_counter, parsed_lines_t *parsed_lines, symbol_table_t *symbol_table, program_entries_t *entries_list)
 {
     RC_t return_code = UNINITIALIZED;
     FILE *input_file = NULL;
@@ -86,7 +86,7 @@ RC_t FIRST_PASS__process_input_file(char *input_file_path, int *instruction_coun
     /* Clear entries list before adding new entries */
     for (i = 0; i < MAX_ENTRIES; i++)
     {
-        entries_list[i] = NULL;
+        entries_list->entries[i].entry_name = NULL;
     }
 
     /* Clear symbol table before adding new symbols */
@@ -109,72 +109,72 @@ RC_t FIRST_PASS__process_input_file(char *input_file_path, int *instruction_coun
         {
             goto Exit;
         }
-        EXIT_ON_ERROR(LINE_PARSER__parse_line(line_buffer, &parsed_lines[line_index]), &return_code);
+        EXIT_ON_ERROR(LINE_PARSER__parse_line(line_buffer, &parsed_lines->line[line_index]), &return_code);
     }
 
     for (line_index = 0; line_index < MAX_LINES_IN_FILE; line_index++)
     {
-        if (parsed_lines[line_index].line_type == LINE_TYPE__UNINITIALIZED)
+        if (parsed_lines->line[line_index].line_type == LINE_TYPE__UNINITIALIZED)
         {
             break; /* No more parsed lines */
         }
-        if (parsed_lines[line_index].line_type == LINE_TYPE__EMPTY)
+        if (parsed_lines->line[line_index].line_type == LINE_TYPE__EMPTY)
         {
             continue; /* Skip empty lines */
         }
 
-        switch (parsed_lines[line_index].line_type)
+        switch (parsed_lines->line[line_index].line_type)
         {
             case LINE_TYPE__INSTRUCTION:
-                if (parsed_lines[line_index].label != NULL)
+                if (parsed_lines->line[line_index].label != NULL)
                 {
-                    symbol_table->symbols[symbol_index].symbol_name = parsed_lines[line_index].label;
+                    symbol_table->symbols[symbol_index].symbol_name = parsed_lines->line[line_index].label;
                     symbol_table->symbols[symbol_index].ic_value = *instruction_counter;
                     symbol_table->symbols[symbol_index].attributes[0] = SYMBOL_CODE;
                     symbol_index++;
                 }
-                EXIT_ON_ERROR(ARCHITECTURE__get_opcode_size(parsed_lines[line_index].opcode, &opcode_size), &return_code);
-                parsed_lines[line_index].line_ic = *instruction_counter;
+                EXIT_ON_ERROR(ARCHITECTURE__get_opcode_size(parsed_lines->line[line_index].opcode, &opcode_size), &return_code);
+                parsed_lines->line[line_index].line_ic = *instruction_counter;
                 (*instruction_counter) += opcode_size;
                 break;
             case LINE_TYPE__EXTERN:
-                if (parsed_lines[line_index].label != NULL)
+                if (parsed_lines->line[line_index].label != NULL)
                 {
                     return_code = FIRST_PASS__PROCESS_INPUT_FILE__FOUND_EXTERN_WITH_LABEL;
                     goto Exit;
                 }
-                symbol_table->symbols[symbol_index].symbol_name = parsed_lines[line_index].extern_name;
+                symbol_table->symbols[symbol_index].symbol_name = parsed_lines->line[line_index].extern_name;
                 symbol_table->symbols[symbol_index].ic_value = 0;
                 symbol_table->symbols[symbol_index].attributes[0] = SYMBOL_EXTERNAL;
                 symbol_index++;
                 break;
             case LINE_TYPE__ENTRY:
-                entries_list[entry_index] = parsed_lines[line_index].entry_name;
+                entries_list->entries[entry_index].entry_name = parsed_lines->line[line_index].entry_name;
                 entry_index++;
                 break;
             case LINE_TYPE__STRING:
-                if (parsed_lines[line_index].string[0] == '\0')
+                if (parsed_lines->line[line_index].string[0] == '\0')
                 {
                     return FIRST_PASS__PROCESS_INPUT_FILE__INVALID_STRING;
                 }
-                if (parsed_lines[line_index].label != NULL)
+                if (parsed_lines->line[line_index].label != NULL)
                 {
-                    symbol_table->symbols[symbol_index].symbol_name = parsed_lines[line_index].label;
+                    symbol_table->symbols[symbol_index].symbol_name = parsed_lines->line[line_index].label;
                     symbol_table->symbols[symbol_index].attributes[0] = SYMBOL_DATA;
                     symbol_table->symbols[symbol_index].ic_value = *data_counter;
                     symbol_index++;
                 }
-                (*data_counter) += (int)strlen(parsed_lines[line_index].string) + NULL_TERMINATOR_SIZE;
+                (*data_counter) += (int)strlen(parsed_lines->line[line_index].string) + NULL_TERMINATOR_SIZE;
                 break;
             case LINE_TYPE__DATA:
-                if (parsed_lines[line_index].label != NULL)
+                if (parsed_lines->line[line_index].label != NULL)
                 {
-                    symbol_table->symbols[symbol_index].symbol_name = parsed_lines[line_index].label;
+                    symbol_table->symbols[symbol_index].symbol_name = parsed_lines->line[line_index].label;
                     symbol_table->symbols[symbol_index].attributes[0] = SYMBOL_DATA;
                     symbol_table->symbols[symbol_index].ic_value = *data_counter;
                     symbol_index++;
                 }
-                (*data_counter) += parsed_lines[line_index].numbers_count;
+                (*data_counter) += parsed_lines->line[line_index].numbers_count;
                 break;
             case LINE_TYPE__EMPTY:
                 /* No action needed for these line types in the first pass */

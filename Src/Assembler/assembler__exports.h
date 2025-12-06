@@ -12,13 +12,21 @@ typedef enum {
 } symbol_attribute_t;
 
 typedef enum {
-    OPERAND_UNINITIALIZED,
-    OPERAND_REGISTER,
-    OPERAND_LABEL,
+    OPERAND_UNINITIALIZED = -1,
     OPERAND_IMMEDIATE,
-    OPERAND_EXTERNAL,
-    OPERAND_RELATIVE
+    OPERAND_DIRECT,
+    OPERAND_RELATIVE,
+    OPERAND_REGISTER,
+    OPERAND_EXTERNAL
 } operand_type_t;
+
+typedef struct program_entry_t {
+    char *entry_name;
+} program_entry_t;
+
+typedef struct program_entries_t {
+    program_entry_t entries[MAX_ENTRIES];
+} program_entries_t;
 
 typedef struct {
     char *symbol_name;

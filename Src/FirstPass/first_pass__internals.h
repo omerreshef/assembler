@@ -21,4 +21,4 @@ RC_t first_pass__detect_symbols_duplication(symbol_table_t *symbol_table, int sy
  * On success, if a duplication was found, return FIRST_PASS__DETECT_ENTRIES_DUPLICATION__FOUND_DUPLICATION.
  * If no duplication was found, return SUCCESS.
  */
-RC_t first_pass__detect_entries_duplication(char *entries_list[MAX_ENTRIES], int entries_amount);
+RC_t first_pass__detect_entries_duplication(program_entries_t *entries_list, int entries_amount);

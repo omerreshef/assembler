@@ -5,22 +5,22 @@
 #include "architecture__exports.h"
 
 opcode_t OPCODES[] = {
-    {"stop", 0},
-    {"rts",  0},
-    {"jmp",  1},
-    {"prn",  1},
-    {"red",  1},
-    {"inc",  1},
-    {"clr",  1},
-    {"bne",  1},
-    {"dec",  1},
-    {"jsr",  1},
-    {"not",  1},
-    {"mov",  2},
-    {"cmp",  2},
-    {"add",  2},
-    {"sub",  2},
-    {"lea",  2}
+    {"mov", 2, 0, -1},
+    {"cmp", 2, 1, -1},
+    {"add", 2, 2, 10},
+    {"sub", 2, 2, 11},
+    {"lea", 2, 4, -1},
+    {"clr", 1, 5, 10},
+    {"not", 1, 5, 11},
+    {"inc", 1, 5, 12},
+    {"dec", 1, 5, 13},
+    {"jmp", 1, 9, 10},
+    {"bne", 1, 9, 11},
+    {"jsr", 1, 9, 12},
+    {"red", 1, 12, -1},
+    {"prn", 1, 13, -1},
+    {"rts", 0, 14, -1},
+    {"stop", 0, 15, -1}
 };
 
 register_t REGISTERS[] = {
@@ -151,22 +151,22 @@ Exit:
     return return_code;
 }
 
-RC_t ARCHITECTURE__get_opcode_operands_number(char *opcode_name, int *operands_number)
+RC_t ARCHITECTURE__get_opcode_details(char *opcode_name, opcode_t *opcode_details)
 {
     RC_t return_code = UNINITIALIZED;
     bool is_opcode = false;
     int i = 0;
 
-    if (opcode_name == NULL || operands_number == NULL)
+    if (opcode_name == NULL || opcode_details == NULL)
     {
-        return_code = ARCHITECTURE__GET_OPCODE_OPERANDS_NUMBER__NULL_ARGUMENT;
+        return_code = ARCHITECTURE__GET_OPCODE_DETAILS__NULL_ARGUMENT;
         goto Exit;
     }
 
     EXIT_ON_ERROR(ARCHITECTURE__is_opcode(opcode_name, &is_opcode), &return_code);
     if (!is_opcode)
     {
-        return_code = ARCHITECTURE__GET_OPCODE_OPERANDS_NUMBER__NOT_AN_OPCODE;
+        return_code = ARCHITECTURE__GET_OPCODE_DETAILS__NOT_AN_OPCODE;
         goto Exit;
     }
 
@@ -174,7 +174,7 @@ RC_t ARCHITECTURE__get_opcode_operands_number(char *opcode_name, int *operands_n
     {
         if (strcmp(opcode_name, OPCODES[i].opcode_name) == 0)
         {
-            *operands_number = OPCODES[i].opcode_operands_number;
+            memcpy(opcode_details, &OPCODES[i], sizeof(opcode_t));
             break;
         }
     }
@@ -190,6 +190,7 @@ RC_t ARCHITECTURE__get_opcode_size(char *opcode_name, int *opcode_size)
     RC_t return_code = UNINITIALIZED;
     bool is_opcode = false;
     int operands_number = 0;
+    opcode_t opcode_details = {0};
     int i = 0;
 
     if (opcode_name == NULL || opcode_size == NULL)
@@ -198,9 +199,9 @@ RC_t ARCHITECTURE__get_opcode_size(char *opcode_name, int *opcode_size)
         goto Exit;
     }
 
-    EXIT_ON_ERROR(ARCHITECTURE__get_opcode_operands_number(opcode_name, &operands_number), &return_code);
+    EXIT_ON_ERROR(ARCHITECTURE__get_opcode_details(opcode_name, &opcode_details), &return_code);
 
-    *opcode_size = operands_number + 1; /* +1 for the opcode itself */
+    *opcode_size = opcode_details.opcode_operands_number + 1; /* +1 for the opcode itself */
 
     return_code = SUCCESS;
 Exit:
