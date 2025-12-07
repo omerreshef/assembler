@@ -29,7 +29,7 @@ typedef struct parsed_line_t {
 
 typedef struct parsed_lines_t {
     parsed_line_t line[MAX_LINES_IN_FILE];
-} parsed_lines_t
+} parsed_lines_t;
 
 /**
  * Parses a line of assembly code into its components.

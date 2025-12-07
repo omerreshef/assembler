@@ -188,10 +188,7 @@ Exit:
 RC_t ARCHITECTURE__get_opcode_size(char *opcode_name, int *opcode_size)
 {
     RC_t return_code = UNINITIALIZED;
-    bool is_opcode = false;
-    int operands_number = 0;
     opcode_t opcode_details = {0};
-    int i = 0;
 
     if (opcode_name == NULL || opcode_size == NULL)
     {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "common__exports.h"
+#include "assembler__exports.h"
 
 #define MAX_EXTERN_USAGES 1000
 
@@ -10,23 +11,6 @@
 ( ( (source_address_mode)      & 0x3 ) << 2 ) | \
 ( ( (destination_address_mode) & 0x3 ) << 0 )
 
-typedef struct encoded_line_t {
-    int *encoded_line;
-    int words_count;
-} encoded_line_t;
-
-typedef struct encoded_line_t {
-    encoded_line_t encoded_line[MAX_LINES_IN_FILE];
-} program_encoded_lines_t;
-
-typedef struct extern_usage_t {
-    char *name;
-    int ic;
-} extern_usage_t;
-
-typedef struct extern_usages_t {
-    extern_usage_t extern_usage[MAX_EXTERN_USAGES];
-} extern_usages_t;
 
 /**
  * Finalizes the symbol table by marking entries.

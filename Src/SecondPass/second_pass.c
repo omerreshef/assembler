@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#include "assembler__exports.h"
 #include "line_parser__exports.h"
 #include "common__exports.h"
 #include "architecture__exports.h"
@@ -46,6 +45,8 @@ RC_t second_pass__finalize_symbol_table(symbol_table_t *symbol_table, program_en
                 break;
             }
         }
+
+        printf("PAPA %s\n", entries_list->entries[entry_index].entry_name);
 
         if (!found_symbol)
         {
@@ -100,7 +101,6 @@ RC_t second_pass__resolve_operand(char *operand, symbol_table_t *symbol_table, i
     char *end_pointer = NULL;
     bool is_register = false;
     bool is_label = false;
-    int label_ic = 0;
     int i = 0;
 
     if (operand == NULL || symbol_table == NULL || operand_value == NULL || operand_type == NULL)
@@ -146,6 +146,7 @@ RC_t second_pass__resolve_operand(char *operand, symbol_table_t *symbol_table, i
         }
         if (!is_label)
         {
+            printf("Label not found: %s\n", operand);
             return_code = SECOND_PASS__RESOLVE_OPERAND__LABEL_NOT_FOUND;
             goto Exit;
         }
@@ -232,11 +233,7 @@ RC_t second_pass__encode_instruction(parsed_line_t *instruction,
     opcode_t opcode_details = {0};
     int opcode_value = 0;
     int opcode_funct = -1;
-    int source_address_mode = 0;
-    int destination_address_mode = 0;
     int operands_number = 0;
-    int first_operand_encode = 0;
-    int second_operand_encode = 0;
 
     EXIT_ON_ERROR(ARCHITECTURE__get_opcode_details(instruction->opcode, &opcode_details), &return_code);
     opcode_value = opcode_details.opcode;
@@ -283,7 +280,8 @@ RC_t second_pass__encode_line(extern_usages_t *extern_usages, parsed_line_t *par
     operand_type_t first_operand_type = OPERAND_UNINITIALIZED;
     operand_type_t second_operand_type = OPERAND_UNINITIALIZED;
 
-    if (parsed_line == NULL)
+
+    if (extern_usages == NULL || parsed_line == NULL || symbol_table == NULL || encoded_line == NULL)
     {
         return_code = SECOND_PASS__ENCODE_LINE__NULL_ARGUMENT;
         goto Exit;
@@ -330,11 +328,13 @@ RC_t second_pass__encode_line(extern_usages_t *extern_usages, parsed_line_t *par
         case LINE_TYPE__EMPTY:
         case LINE_TYPE__EXTERN:
         case LINE_TYPE__ENTRY:
+            printf("Unsupported line type in second pass encoding: %d opcode=%s\n", parsed_line->line_type, parsed_line->opcode);
             return_code = SECOND_PASS__ENCODE_LINE__UNSOPPORTED_LINE_TYPE;
             goto Exit;
             break;
         
         default:
+            printf("Invalid line type in second pass encoding: %d opcode=%s\n", parsed_line->line_type, parsed_line->opcode);
             return_code = SECOND_PASS__ENCODE_LINE__INVALID_LINE_TYPE;
             goto Exit;
             break;
@@ -346,10 +346,11 @@ Exit:
     return return_code;
 }
 
-RC_t SECOND_PASS__process(program_encoded_lines_t *encoded_lines, extern_usages_t *extern_usages, parsed_lines_t *parsed_lines, symbol_table_t *symbol_table, program_entries_t *entries_list)
+RC_t SECOND_PASS__process(parsed_lines_t *parsed_lines, symbol_table_t *symbol_table, program_entries_t *entries_list, extern_usages_t *extern_usages, encoded_lines_t *encoded_lines)
 {
     RC_t return_code = UNINITIALIZED;
-    int i = 0;
+    int parsed_line_index = 0;
+    int encoded_line_index = 0;
 
     if (parsed_lines == NULL || symbol_table == NULL || entries_list == NULL)
     {
@@ -357,9 +358,28 @@ RC_t SECOND_PASS__process(program_encoded_lines_t *encoded_lines, extern_usages_
     }
 
     EXIT_ON_ERROR(second_pass__finalize_symbol_table(symbol_table, entries_list), &return_code);
-    for (i = 0; i < MAX_LINES_IN_FILE; i++)
+    for (parsed_line_index = 0; parsed_line_index < MAX_LINES_IN_FILE; parsed_line_index++)
     {
-        EXIT_ON_ERROR(second_pass__encode_line(extern_usages, &parsed_lines->line[i], symbol_table, &encoded_lines->encoded_line[i]), &return_code);
+        if (parsed_lines->line[parsed_line_index].line_type == LINE_TYPE__UNINITIALIZED)
+        {
+            break;
+        }
+        return_code =  second_pass__encode_line(extern_usages, &parsed_lines->line[parsed_line_index], symbol_table, &encoded_lines->encoded_line[encoded_line_index]);
+        if (return_code == SECOND_PASS__ENCODE_LINE__UNSOPPORTED_LINE_TYPE)
+        {
+            /** This line is not encoded, continue to next line. */
+            return_code = SUCCESS;
+            continue;
+        }
+        else if (return_code == SUCCESS)
+        {
+            /** Line is encoded and we set the encoded line index. */
+            encoded_line_index++;
+        }
+        else
+        {
+            goto Exit;
+        }
     }
 
 Exit:
