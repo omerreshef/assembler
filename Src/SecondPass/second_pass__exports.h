@@ -9,6 +9,7 @@
 
 typedef struct encoded_line_t {
     int *encoded_line;
+    char *words_type;
     int words_count;
 } encoded_line_t;
 

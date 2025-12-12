@@ -1,0 +1,1 @@
+RC_t files_creator__get_obj_file_header(parsed_lines_t *parsed_lines, int *instruction_image_size, int *data_image_size);

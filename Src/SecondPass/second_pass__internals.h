@@ -50,8 +50,9 @@ RC_t second_pass__resolve_operand(char *operand, symbol_table_t *symbol_table, i
  * @param operand_value The value of the operand to encode.
  * @param operand_type The addressing type of the operand.
  * @param encoded_operand Pointer to store the encoded operand value.
+ * @param word_type Pointer to store the encoded word type
  */
-RC_t second_pass__handle_instruction_operand(int operand_value, operand_type_t operand_type, int *encoded_operand);
+RC_t second_pass__handle_instruction_operand(int operand_value, operand_type_t operand_type, int *encoded_operand, char *word_type);
 
 /**
  * Encodes an instruction line into machine code.
@@ -72,8 +73,7 @@ RC_t second_pass__encode_instruction(parsed_line_t *instruction,
     int second_operand_value,
     operand_type_t first_operand_type,
     operand_type_t second_operand_type,
-    int encoded_instruction[MAX_WORDS_IN_INSTRUCTION],
-    int *words_count);
+    encoded_line_t *encoded_line);
 
 /**
  * Encodes a single line based on its parsed representation.
@@ -86,3 +86,12 @@ RC_t second_pass__encode_instruction(parsed_line_t *instruction,
  * If extern usages are found, they are stored in extern_usages.
  */
 RC_t second_pass__encode_line(extern_usages_t *extern_usages, parsed_line_t *parsed_line, symbol_table_t *symbol_table, encoded_line_t *encoded_line);
+
+/**
+ * Gets sorted parsed lines with instructions first, followed by data and string lines.
+ * @param parsed_lines The original array of parsed lines.
+ * @param sorted_lines Pointer to the parsed_lines_t structure to store the sorted lines.
+ * 
+ * On success, the sorted lines are stored in sorted_lines and return SUCCESS.
+ */
+RC_t second_pass__get_sorted_parsed_lines(parsed_lines_t *parsed_lines, parsed_lines_t *sorted_lines);

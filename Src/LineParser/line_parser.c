@@ -137,8 +137,7 @@ RC_t line_parser__parse_data_numbers(char* data, parsed_line_t *parsed_line)
     numbers_copy = malloc(strlen(data) + NULL_TERMINATOR_SIZE);
     EXIT_IF_NULL(numbers_copy, LINE_PARSER__PARSE_DATA_NUMBERS__ALLOCATION_ERROR);
     memset(numbers_copy, '\0', strlen(data) + NULL_TERMINATOR_SIZE);
-    /* Dont copy the quotation character in the end of the string. Just the numbers */
-    memcpy(numbers_copy, data, strlen(data) - QUOTATION_CHARACTER_LEN);
+    memcpy(numbers_copy, data, strlen(data));
 
 
     token = strtok(numbers_copy, ",");
@@ -215,7 +214,7 @@ RC_t LINE_PARSER__parse_line(const char *line_buffer, parsed_line_t *parsed_line
     if (strstr(line_pointer, ".data"))
     {
         parsed_line->line_type = LINE_TYPE__DATA;
-        line_pointer += strlen(".data") + SPACE_CHARACTER_LEN + QUOTATION_CHARACTER_LEN;
+        line_pointer += strlen(".data") + SPACE_CHARACTER_LEN;
         
         EXIT_ON_ERROR(line_parser__parse_data_numbers(line_pointer, parsed_line), &return_code);
     } 
