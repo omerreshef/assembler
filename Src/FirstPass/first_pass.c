@@ -65,7 +65,7 @@ Exit:
     return return_code;
 }
 
-RC_t FIRST_PASS__process_input_file(char *input_file_path, int *instruction_counter, int *data_counter, parsed_lines_t *parsed_lines, symbol_table_t *symbol_table, program_entries_t *entries_list)
+RC_t FIRST_PASS__process(char *input_file_path, int *instruction_counter, int *data_counter, parsed_lines_t *parsed_lines, symbol_table_t *symbol_table, program_entries_t *entries_list)
 {
     RC_t return_code = UNINITIALIZED;
     FILE *input_file = NULL;

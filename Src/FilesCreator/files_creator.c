@@ -11,11 +11,26 @@ RC_t FILES_CREATOR__create_ext_file(const char *file_path, extern_usages_t *exte
 {
     RC_t return_code = UNINITIALIZED;
     FILE *ext_file = NULL;
+    int total_extern_usages = 0;
     int i = 0;
 
     if (file_path == NULL || extern_usages == NULL)
     {
         return_code = FILES_CREATOR__CREATE_EXT_FILE__NULL_ARGUMENT;
+        goto Exit;
+    }
+
+    for (i = 0; i < MAX_EXTERN_USAGES; i++)
+    {
+        if (extern_usages->extern_usage[i].name != NULL)
+        {
+            total_extern_usages++;
+        }
+    }
+
+    if (total_extern_usages == 0)
+    {
+        return_code = FILES_CREATOR__NO_EXTERN_USAGES_TO_WRITE;
         goto Exit;
     }
 
@@ -28,11 +43,10 @@ RC_t FILES_CREATOR__create_ext_file(const char *file_path, extern_usages_t *exte
 
     for (i = 0; i < MAX_EXTERN_USAGES; i++)
     {
-        if (extern_usages->extern_usage[i].name == NULL)
+        if (extern_usages->extern_usage[i].name != NULL)
         {
-            break;
+            fprintf(ext_file, "%s %04d\n", extern_usages->extern_usage[i].name, extern_usages->extern_usage[i].ic);
         }
-        fprintf(ext_file, "%s %04d\n", extern_usages->extern_usage[i].name, extern_usages->extern_usage[i].ic);
     }
 
     return_code = SUCCESS;
@@ -48,11 +62,30 @@ RC_t FILES_CREATOR__create_ent_file(const char *file_path, symbol_table_t *symbo
 {
     RC_t return_code = UNINITIALIZED;
     FILE *ent_file = NULL;
+    int total_entries = 0;
     int i = 0;
 
     if (file_path == NULL || symbol_table == NULL)
     {
         return_code = FILES_CREATOR__CREATE_ENT_FILE__NULL_ARGUMENT;
+        goto Exit;
+    }
+
+    for (i = 0; i < MAX_SYMBOLS; i++)
+    {
+        if (symbol_table->symbols[i].symbol_name == NULL)
+        {
+            continue;
+        }
+        if (symbol_table->symbols[i].attributes[1] == SYMBOL_ENTRY)
+        {
+            total_entries++;
+        }
+    }
+
+    if (total_entries == 0)
+    {
+        return_code = FILES_CREATOR__NO_ENTRIES_TO_WRITE;
         goto Exit;
     }
 
@@ -129,7 +162,6 @@ Exit:
     return return_code;
 
 }
-
 
 RC_t FILES_CREATOR__create_asm_file(const char *file_path, encoded_lines_t *encoded_lines ,parsed_lines_t *parsed_lines)
 {

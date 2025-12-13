@@ -1,7 +1,19 @@
 #pragma once
 #include <stdio.h>
+#include <stdbool.h>
+#include <stddef.h>
 
 #include "common__exports.h"
+
+/**
+ * Check if a file exists.
+ * @file_path: path to the file to check.
+ * @exists: pointer to a bool where the result will be stored.
+ * 
+ * On success, the function sets *exists to true if the file exists,
+ * or false if it does not, and returns SUCCESS.
+ */
+RC_t FILE__is_exists(const char *file_path, bool *exists);
 
 /**
  * Open a file.
@@ -17,7 +29,6 @@ RC_t FILE__open(const char *file_path, FILE **file_pointer, char *mode);
  */
 RC_t FILE__close(FILE *file_pointer);
 
-
 /**
  * Read a single line from a file stream into a buffer.
  * @file_pointer: open FILE stream to read from.
@@ -30,3 +41,11 @@ RC_t FILE__close(FILE *file_pointer);
  * line fails (fgets returns NULL) returns FILE__READ_LINE__FGETS_ERROR.
  */
 RC_t FILE__read_line(FILE *file_pointer, char *buffer, size_t buffer_size);
+
+/**
+ * Delete a file from the file system.
+ * @file_path: path to the file to delete.
+ * 
+ * On success, the function deletes the file and returns SUCCESS.
+ */
+RC_t FILE__delete(const char *file_path);
