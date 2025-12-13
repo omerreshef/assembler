@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
     EXIT_ON_ERROR(FILES_CREATOR__create_ent_file("/home/local/Projects/Maabada/assembler/entries.txt", &symbol_table), &return_code);
     EXIT_ON_ERROR(FILES_CREATOR__create_ext_file("/home/local/Projects/Maabada/assembler/external.txt", &extern_usages), &return_code);
     EXIT_ON_ERROR(FILES_CREATOR__create_asm_file("/home/local/Projects/Maabada/assembler/asm.txt", &encoded_lines, &parsed_lines), &return_code);
-    MEMORY_CLEANER__clean_allocated_memory(&parsed_lines, &symbol_table, &extern_usages, &encoded_lines);
+    MEMORY_CLEANER__clean_allocated_memory(&parsed_lines, &encoded_lines);
 
     return_code = SUCCESS;
 Exit:
