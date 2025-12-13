@@ -1,7 +1,5 @@
 #pragma once
 
-#define MAX_SYMBOLS 1024
-#define MAX_ENTRIES 50
 #define MAX_SYMBOL_ATTRIBUTES 2
 
 typedef enum {
@@ -25,7 +23,8 @@ typedef struct program_entry_t {
 } program_entry_t;
 
 typedef struct program_entries_t {
-    program_entry_t entries[MAX_ENTRIES];
+    program_entry_t *entries;
+    int entries_amount;
 } program_entries_t;
 
 typedef struct {
@@ -35,5 +34,6 @@ typedef struct {
 } symbol_t;
 
 typedef struct {
-    symbol_t symbols[MAX_SYMBOLS];
+    symbol_t *symbols;
+    int symbols_amount;
 } symbol_table_t;

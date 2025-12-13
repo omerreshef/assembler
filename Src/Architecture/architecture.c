@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdio.h>
 
 #include "common__exports.h"
 #include "architecture__internals.h"
@@ -146,6 +147,7 @@ RC_t ARCHITECTURE__get_register_value(char *name, int *register_value)
         }
     }
 
+    printf("Error: Invalid register name: %s\n", name);
     return_code = ARCHITECTURE__GET_REGISTER_VALUE__INVALID_REGISTER_MAME;
 Exit:
     return return_code;
@@ -166,6 +168,7 @@ RC_t ARCHITECTURE__get_opcode_details(char *opcode_name, opcode_t *opcode_detail
     EXIT_ON_ERROR(ARCHITECTURE__is_opcode(opcode_name, &is_opcode), &return_code);
     if (!is_opcode)
     {
+        printf("Error: Not an opcode name: %s\n", opcode_name);
         return_code = ARCHITECTURE__GET_OPCODE_DETAILS__NOT_AN_OPCODE;
         goto Exit;
     }

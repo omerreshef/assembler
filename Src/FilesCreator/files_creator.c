@@ -20,7 +20,7 @@ RC_t FILES_CREATOR__create_ext_file(const char *file_path, extern_usages_t *exte
         goto Exit;
     }
 
-    for (i = 0; i < MAX_EXTERN_USAGES; i++)
+    for (i = 0; i < extern_usages->extern_usages_amount; i++)
     {
         if (extern_usages->extern_usage[i].name != NULL)
         {
@@ -41,7 +41,7 @@ RC_t FILES_CREATOR__create_ext_file(const char *file_path, extern_usages_t *exte
         goto Exit;
     }
 
-    for (i = 0; i < MAX_EXTERN_USAGES; i++)
+    for (i = 0; i < extern_usages->extern_usages_amount; i++)
     {
         if (extern_usages->extern_usage[i].name != NULL)
         {
@@ -71,7 +71,7 @@ RC_t FILES_CREATOR__create_ent_file(const char *file_path, symbol_table_t *symbo
         goto Exit;
     }
 
-    for (i = 0; i < MAX_SYMBOLS; i++)
+    for (i = 0; i < symbol_table->symbols_amount; i++)
     {
         if (symbol_table->symbols[i].symbol_name == NULL)
         {
@@ -97,7 +97,7 @@ RC_t FILES_CREATOR__create_ent_file(const char *file_path, symbol_table_t *symbo
     }
 
 
-    for (i = 0; i < MAX_SYMBOLS; i++)
+    for (i = 0; i < symbol_table->symbols_amount; i++)
     {
         if (symbol_table->symbols[i].symbol_name == NULL)
         {
@@ -188,7 +188,7 @@ RC_t FILES_CREATOR__create_asm_file(const char *file_path, encoded_lines_t *enco
     EXIT_ON_ERROR(files_creator__get_obj_file_header(parsed_lines, &instruction_image_size, &data_image_size), &return_code);
     fprintf(asm_file, "%d %d\n", instruction_image_size, data_image_size);
 
-    for (i = 0; i < MAX_LINES_IN_FILE; i++)
+    for (i = 0; i < encoded_lines->encoded_lines_amount; i++)
     {
         if (encoded_lines->encoded_line[i].words_count == 0)
         {

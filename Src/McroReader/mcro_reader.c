@@ -96,6 +96,7 @@ RC_t mcro_reader__read_mcros_from_file(const char *file_path, mcro_t *mcros)
             if (is_instruction || is_opcode || is_register)
             {
                 /* Macro name conflicts with existing instruction, opcode, or register */
+                printf("Macro name conflicts with existing instruction, opcode, or register: %s\n", mcro_name);
                 return_code = MCRO_READER__INVALID_MCRO_NAME;
                 goto Exit;
             }

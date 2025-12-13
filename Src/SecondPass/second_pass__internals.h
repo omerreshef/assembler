@@ -3,7 +3,6 @@
 #include "common__exports.h"
 #include "assembler__exports.h"
 
-#define MAX_EXTERN_USAGES 1000
 
 #define MAKE_MACHINE_CODE(opcode, funct, source_address_mode, destination_address_mode) \
 ( ( (opcode)                   & 0xF ) << 8 ) | \
@@ -95,3 +94,13 @@ RC_t second_pass__encode_line(extern_usages_t *extern_usages, parsed_line_t *par
  * On success, the sorted lines are stored in sorted_lines and return SUCCESS.
  */
 RC_t second_pass__get_sorted_parsed_lines(parsed_lines_t *parsed_lines, parsed_lines_t *sorted_lines);
+
+/**
+ * Counts the number of extern usages in the parsed lines.
+ * @param parsed_lines The array of parsed lines to analyze.
+ * @param symbol_table The symbol table for resolving symbols.
+ * @param extern_usages_count Pointer to store the count of extern usages found.
+ * 
+ * On success, fills extern_usages_count with the number of extern usages and returns SUCCESS.
+ */
+RC_t second_pass__count_extern_usages(parsed_lines_t *parsed_lines, symbol_table_t *symbol_table, int *extern_usages_count);

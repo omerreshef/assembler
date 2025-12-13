@@ -75,6 +75,7 @@ RC_t line_parser__parse_instruction_operands(const char* opcode, const char* arg
         if (strlen(arguments) != 0)
         {
             /* No operands expected */
+            printf("Expected no operands but found some on %s\n", opcode);
             return_code = LINE_PARSER__PARSE_INSTRUCTION_OPERANDS__NO_OPERANDS_EXPECTED;
             goto Exit;
         }
@@ -127,6 +128,7 @@ RC_t line_parser__parse_data_numbers(char* data, parsed_line_t *parsed_line)
 
     if (numbers_amount == 0) 
     {
+        printf("Error: No data values found in .data declaration: %s\n", data);
         return_code = LINE_PARSER__PARSE_DATA_NUMBERS__NO_DATA_VALUES;
         goto Exit;
     }
@@ -146,6 +148,7 @@ RC_t line_parser__parse_data_numbers(char* data, parsed_line_t *parsed_line)
         if (end_pointer == token || *end_pointer != '\0')
         {
             /* The token is not a valid integer */
+            printf("Invalid data value in .data declaration: %s\n", token);
             return_code = LINE_PARSER__PARSE_DATA_NUMBERS__INVALID_DATA_VALUE;
             goto Exit;
         }
@@ -225,16 +228,24 @@ RC_t LINE_PARSER__parse_line(const char *line_buffer, parsed_line_t *parsed_line
         if (string_start == NULL)
         {
             /* No opening quote found */
-            return_code = LINE_PARSER__PARSE_LINE__NULL_ARGUMENT;
+            printf("No opening quote found in string declaration: %s\n", line_pointer);
+            return_code = LINE_PARSER__PARSE_LINE__NO_QUOTE_IN_STRING;
             goto Exit;
         }
         line_pointer = string_start + 1; /* Move past the opening quote */
         string_end = strchr(line_pointer, '\"');
+        if (string_end == NULL)
+        {
+            /* No closing quote found */
+            printf("No closing quote found in string declaration: %s\n", line_pointer);
+            return_code = LINE_PARSER__PARSE_LINE__NO_QUOTE_IN_STRING;
+            goto Exit;
+        }
         string_length = (int)(string_end - line_pointer);
-        parsed_line->string = malloc(string_length + 1);
-        memset(parsed_line->string, '\0', string_length + 1);
+        parsed_line->string = malloc(string_length + NULL_TERMINATOR_SIZE);
+        memset(parsed_line->string, '\0', string_length + NULL_TERMINATOR_SIZE);
         EXIT_IF_NULL(parsed_line->string, LINE_PARSER__PARSE_LINE__ALLOCATION_ERROR);
-        (void)memset(parsed_line->string, '\0', string_length + 1);
+        (void)memset(parsed_line->string, '\0', string_length + NULL_TERMINATOR_SIZE);
         (void)memcpy(parsed_line->string, line_pointer, string_length);
 
     } 
@@ -242,6 +253,7 @@ RC_t LINE_PARSER__parse_line(const char *line_buffer, parsed_line_t *parsed_line
     {
         if (label_end != NULL) 
         {
+            printf("Error: Label found in entry declaration: %s\n", line_pointer);
             return_code = LINE_PARSER__PARSE_LINE__LABEL_IN_ENTRY;
             goto Exit;
         }
@@ -257,11 +269,18 @@ RC_t LINE_PARSER__parse_line(const char *line_buffer, parsed_line_t *parsed_line
     {
         if (label_end != NULL) 
         {
+            printf("Error: Label found in extern declaration: %s\n", line_pointer);
             return_code = LINE_PARSER__PARSE_LINE__LABEL_IN_EXTERN;
             goto Exit;
         }
         parsed_line->line_type = LINE_TYPE__EXTERN;
         extern_name = strchr(line_pointer, ' ');
+        if (extern_name == NULL) 
+        {
+            printf("Error: No extern name found in extern declaration: %s\n", line_pointer);
+            return_code = LINE_PARSER__PARSE_LINE__NO_EXTERN_NAME;
+            goto Exit;
+        }
         extern_name++; /* Skip space character to the start if the extern name*/
         parsed_line->extern_name = malloc(strlen(extern_name) + NULL_TERMINATOR_SIZE);
         memset(parsed_line->extern_name, '\0', strlen(extern_name) + NULL_TERMINATOR_SIZE);
@@ -295,6 +314,7 @@ RC_t LINE_PARSER__parse_line(const char *line_buffer, parsed_line_t *parsed_line
         EXIT_ON_ERROR(ARCHITECTURE__is_opcode(parsed_line->opcode, &is_opcode), &return_code);
         if (!is_opcode)
         {
+            printf("Invalid opcode: %s in line %s\n", parsed_line->opcode, line_pointer);
             return_code = LINE_PARSER__PARSE_LINE__INVALID_OPCDODE;
             goto Exit;
         }

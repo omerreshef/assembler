@@ -65,29 +65,117 @@ Exit:
     return return_code;
 }
 
-RC_t FIRST_PASS__process(char *input_file_path, int *instruction_counter, int *data_counter, parsed_lines_t *parsed_lines, symbol_table_t *symbol_table, program_entries_t *entries_list)
+RC_t first_pass__allocate_structures_memory(parsed_lines_t *parsed_lines, symbol_table_t *symbol_table, program_entries_t *entries_list, encoded_lines_t *encoded_lines, int lines_amount)
+{
+    RC_t return_code = UNINITIALIZED;
+    int line_index = 0;
+    int symbols_amount = 0;
+    int entries_amount = 0;
+
+    if (parsed_lines == NULL || symbol_table == NULL || entries_list == NULL || encoded_lines == NULL)
+    {
+        return_code = FIRST_PASS__ALLOCATE_STRUCTURES_MEMORY__NULL_ARGUMENT;
+        goto Exit;
+    }
+
+        /* Count symbols and entries amount for the size of symbol_table and entries_list */
+    for (line_index = 0; line_index < MAX_LINES_IN_FILE; line_index++)
+    {
+        switch (parsed_lines->line[line_index].line_type)
+        {
+            case LINE_TYPE__INSTRUCTION:
+                if (parsed_lines->line[line_index].label != NULL)
+                {
+                    symbols_amount++;
+                }
+                break;
+            case LINE_TYPE__STRING:
+                if (parsed_lines->line[line_index].label != NULL)
+                {
+                    symbols_amount++;
+                }
+                break;
+            case LINE_TYPE__DATA:
+                if (parsed_lines->line[line_index].label != NULL)
+                {
+                    symbols_amount++;
+                }
+                break;
+            case LINE_TYPE__EXTERN:
+                symbols_amount++;
+                break;
+            case LINE_TYPE__ENTRY:
+                entries_amount++;
+                break;
+            default:
+                break;
+        }
+    }
+
+    if (symbols_amount > 0)
+    {
+        symbol_table->symbols = (symbol_t *)malloc(sizeof(symbol_t) * symbols_amount);
+        EXIT_IF_NULL(symbol_table->symbols, FIRST_PASS__ALLOCATE_STRUCTURES_MEMORY__MEMORY_ALLOCATION_FAILURE);
+        /* zero-initialize so unused entries are NULL/0 */
+        memset(symbol_table->symbols, 0, sizeof(symbol_t) * symbols_amount);
+        symbol_table->symbols_amount = symbols_amount;
+    }
+    else
+    {
+        symbol_table->symbols = NULL;
+        symbol_table->symbols_amount = 0;
+    }
+
+    if (entries_amount > 0)
+    {
+        entries_list->entries = (program_entry_t *)malloc(sizeof(program_entry_t) * entries_amount);
+        EXIT_IF_NULL(entries_list->entries, FIRST_PASS__ALLOCATE_STRUCTURES_MEMORY__MEMORY_ALLOCATION_FAILURE);
+        memset(entries_list->entries, 0, sizeof(program_entry_t) * entries_amount);
+        entries_list->entries_amount = entries_amount;
+    }
+    else
+    {
+        entries_list->entries = NULL;
+        entries_list->entries_amount = 0;
+    }
+
+    if (lines_amount > 0)
+    {
+        encoded_lines->encoded_line = (encoded_line_t *)malloc(sizeof(encoded_line_t) * lines_amount);
+        EXIT_IF_NULL(encoded_lines->encoded_line, FIRST_PASS__ALLOCATE_STRUCTURES_MEMORY__MEMORY_ALLOCATION_FAILURE);
+        memset(encoded_lines->encoded_line, 0, sizeof(encoded_line_t) * lines_amount);
+        encoded_lines->encoded_lines_amount = lines_amount;
+    }
+    else
+    {
+        encoded_lines->encoded_line = NULL;
+        encoded_lines->encoded_lines_amount = 0;
+    }
+    return_code = SUCCESS;
+Exit:
+    return return_code;
+}
+
+RC_t FIRST_PASS__process(char *input_file_path, int *instruction_counter, int *data_counter, parsed_lines_t *parsed_lines, symbol_table_t *symbol_table, program_entries_t *entries_list, encoded_lines_t *encoded_lines)
 {
     RC_t return_code = UNINITIALIZED;
     FILE *input_file = NULL;
+    bool is_line_valid = true;
     char line_buffer[MAX_LINE_LENGTH] = {0};
     int line_index = 0;
+    int lines_amount = 0;
     int symbol_index = 0;
     int entry_index = 0;
     int opcode_size = 0;
-    int i = 0;
 
-
-    if (input_file_path == NULL || instruction_counter == NULL || data_counter == NULL)
+    if (input_file_path == NULL || instruction_counter == NULL || data_counter == NULL || parsed_lines == NULL || symbol_table == NULL || entries_list == NULL)
     {
-        return_code = FIRST_PASS__PROCESS_INPUT_FILE__NULL_ARGUMENT;
+        return_code = FIRST_PASS__PROCESS__NULL_ARGUMENT;
         goto Exit;
     }
 
     /* Clear entries list before adding new entries */
-    for (i = 0; i < MAX_ENTRIES; i++)
-    {
-        entries_list->entries[i].entry_name = NULL;
-    }
+    memset(entries_list, 0, sizeof(program_entries_t));
 
     /* Clear symbol table before adding new symbols */
     memset(symbol_table, 0, sizeof(symbol_table_t));
@@ -100,7 +188,7 @@ RC_t FIRST_PASS__process(char *input_file_path, int *instruction_counter, int *d
 
     for (line_index = 0; line_index < MAX_LINES_IN_FILE; line_index++)
     {
-       return_code = FILE__read_line(input_file, line_buffer, sizeof(line_buffer));
+        return_code = FILE__read_line(input_file, line_buffer, sizeof(line_buffer));
         if (return_code == FILE__READ_LINE__EOF_REACHED)
         {
             break; /* End of file reached */
@@ -109,8 +197,22 @@ RC_t FIRST_PASS__process(char *input_file_path, int *instruction_counter, int *d
         {
             goto Exit;
         }
-        EXIT_ON_ERROR(LINE_PARSER__parse_line(line_buffer, &parsed_lines->line[line_index]), &return_code);
+        return_code = LINE_PARSER__parse_line(line_buffer, &parsed_lines->line[line_index]);
+        if (return_code != SUCCESS)
+        {
+            is_line_valid = false;
+            goto Exit;
+        }
     }
+
+    if (!is_line_valid)
+    {
+        return_code = FIRST_PASS__PROCESS__INVALID_LINE_FOUND;
+        goto Exit;
+    }
+
+    lines_amount = line_index;
+    EXIT_ON_ERROR(first_pass__allocate_structures_memory(parsed_lines, symbol_table, entries_list, encoded_lines, lines_amount), &return_code);
 
     for (line_index = 0; line_index < MAX_LINES_IN_FILE; line_index++)
     {
@@ -140,7 +242,7 @@ RC_t FIRST_PASS__process(char *input_file_path, int *instruction_counter, int *d
             case LINE_TYPE__EXTERN:
                 if (parsed_lines->line[line_index].label != NULL)
                 {
-                    return_code = FIRST_PASS__PROCESS_INPUT_FILE__FOUND_EXTERN_WITH_LABEL;
+                    return_code = FIRST_PASS__PROCESS__FOUND_EXTERN_WITH_LABEL;
                     goto Exit;
                 }
                 symbol_table->symbols[symbol_index].symbol_name = parsed_lines->line[line_index].extern_name;
@@ -155,7 +257,7 @@ RC_t FIRST_PASS__process(char *input_file_path, int *instruction_counter, int *d
             case LINE_TYPE__STRING:
                 if (parsed_lines->line[line_index].string[0] == '\0')
                 {
-                    return FIRST_PASS__PROCESS_INPUT_FILE__INVALID_STRING;
+                    return FIRST_PASS__PROCESS__INVALID_STRING;
                 }
                 if (parsed_lines->line[line_index].label != NULL)
                 {
@@ -180,7 +282,7 @@ RC_t FIRST_PASS__process(char *input_file_path, int *instruction_counter, int *d
                 /* No action needed for these line types in the first pass */
                 break;
             default:
-                return_code = FIRST_PASS__PROCESS_INPUT_FILE__UNKNOWN_LINE_TYPE;
+                return_code = FIRST_PASS__PROCESS__UNKNOWN_LINE_TYPE;
                 goto Exit;
         }
     }
