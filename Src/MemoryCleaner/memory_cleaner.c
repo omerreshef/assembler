@@ -94,6 +94,14 @@ void MEMORY_CLEANER__clean_allocated_memory(parsed_lines_t *parsed_lines, encode
     {
         if (symbol_table->symbols != NULL)
         {
+            for (i = 0; i < symbol_table->symbols_amount; i++)
+            {
+                if (symbol_table->symbols[i].symbol_name != NULL)
+                {
+                    free(symbol_table->symbols[i].symbol_name);
+                    symbol_table->symbols[i].symbol_name = NULL;
+                }
+            }
             free(symbol_table->symbols);
             symbol_table->symbols = NULL;
             symbol_table->symbols_amount = 0;
@@ -105,6 +113,14 @@ void MEMORY_CLEANER__clean_allocated_memory(parsed_lines_t *parsed_lines, encode
     {
         if (entries_list->entries != NULL)
         {
+            for (i = 0; i < entries_list->entries_amount; i++)
+            {
+                if (entries_list->entries[i].entry_name != NULL)
+                {
+                    free(entries_list->entries[i].entry_name);
+                    entries_list->entries[i].entry_name = NULL;
+                }
+            }
             free(entries_list->entries);
             entries_list->entries = NULL;
             entries_list->entries_amount = 0;

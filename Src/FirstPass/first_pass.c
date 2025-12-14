@@ -78,7 +78,7 @@ RC_t first_pass__allocate_structures_memory(parsed_lines_t *parsed_lines, symbol
         goto Exit;
     }
 
-        /* Count symbols and entries amount for the size of symbol_table and entries_list */
+    /* Count symbols and entries amount for the size of symbol_table and entries_list */
     for (line_index = 0; line_index < MAX_LINES_IN_FILE; line_index++)
     {
         switch (parsed_lines->line[line_index].line_type)
@@ -230,7 +230,10 @@ RC_t FIRST_PASS__process(char *input_file_path, int *instruction_counter, int *d
             case LINE_TYPE__INSTRUCTION:
                 if (parsed_lines->line[line_index].label != NULL)
                 {
-                    symbol_table->symbols[symbol_index].symbol_name = parsed_lines->line[line_index].label;
+                    symbol_table->symbols[symbol_index].symbol_name = malloc(strlen(parsed_lines->line[line_index].label) + NULL_TERMINATOR_SIZE);
+                    EXIT_IF_NULL(symbol_table->symbols[symbol_index].symbol_name, FIRST_PASS__PROCESS__MEMORY_ALLOCATION_FAILURE);
+                    memset(symbol_table->symbols[symbol_index].symbol_name, 0, strlen(parsed_lines->line[line_index].label) + NULL_TERMINATOR_SIZE);
+                    memcpy(symbol_table->symbols[symbol_index].symbol_name, parsed_lines->line[line_index].label, strlen(parsed_lines->line[line_index].label));
                     symbol_table->symbols[symbol_index].ic_value = *instruction_counter;
                     symbol_table->symbols[symbol_index].attributes[0] = SYMBOL_CODE;
                     symbol_index++;
@@ -245,13 +248,19 @@ RC_t FIRST_PASS__process(char *input_file_path, int *instruction_counter, int *d
                     return_code = FIRST_PASS__PROCESS__FOUND_EXTERN_WITH_LABEL;
                     goto Exit;
                 }
-                symbol_table->symbols[symbol_index].symbol_name = parsed_lines->line[line_index].extern_name;
+                symbol_table->symbols[symbol_index].symbol_name = malloc(strlen(parsed_lines->line[line_index].extern_name) + NULL_TERMINATOR_SIZE);
+                EXIT_IF_NULL(symbol_table->symbols[symbol_index].symbol_name, FIRST_PASS__PROCESS__MEMORY_ALLOCATION_FAILURE);
+                memset(symbol_table->symbols[symbol_index].symbol_name, 0, strlen(parsed_lines->line[line_index].extern_name) + NULL_TERMINATOR_SIZE);
+                memcpy(symbol_table->symbols[symbol_index].symbol_name, parsed_lines->line[line_index].extern_name, strlen(parsed_lines->line[line_index].extern_name));
                 symbol_table->symbols[symbol_index].ic_value = 0;
                 symbol_table->symbols[symbol_index].attributes[0] = SYMBOL_EXTERNAL;
                 symbol_index++;
                 break;
             case LINE_TYPE__ENTRY:
-                entries_list->entries[entry_index].entry_name = parsed_lines->line[line_index].entry_name;
+                entries_list->entries[entry_index].entry_name = malloc(strlen(parsed_lines->line[line_index].entry_name) + NULL_TERMINATOR_SIZE);
+                EXIT_IF_NULL(entries_list->entries[entry_index].entry_name, FIRST_PASS__PROCESS__MEMORY_ALLOCATION_FAILURE);
+                memset(entries_list->entries[entry_index].entry_name, 0, strlen(parsed_lines->line[line_index].entry_name) + NULL_TERMINATOR_SIZE);
+                memcpy(entries_list->entries[entry_index].entry_name, parsed_lines->line[line_index].entry_name, strlen(parsed_lines->line[line_index].entry_name) + NULL_TERMINATOR_SIZE);
                 entry_index++;
                 break;
             case LINE_TYPE__STRING:
@@ -261,7 +270,10 @@ RC_t FIRST_PASS__process(char *input_file_path, int *instruction_counter, int *d
                 }
                 if (parsed_lines->line[line_index].label != NULL)
                 {
-                    symbol_table->symbols[symbol_index].symbol_name = parsed_lines->line[line_index].label;
+                    symbol_table->symbols[symbol_index].symbol_name = malloc(strlen(parsed_lines->line[line_index].label) + NULL_TERMINATOR_SIZE);
+                    EXIT_IF_NULL(symbol_table->symbols[symbol_index].symbol_name, FIRST_PASS__PROCESS__MEMORY_ALLOCATION_FAILURE);
+                    memset(symbol_table->symbols[symbol_index].symbol_name, 0, strlen(parsed_lines->line[line_index].label) + NULL_TERMINATOR_SIZE);
+                    memcpy(symbol_table->symbols[symbol_index].symbol_name, parsed_lines->line[line_index].label, strlen(parsed_lines->line[line_index].label));
                     symbol_table->symbols[symbol_index].attributes[0] = SYMBOL_DATA;
                     symbol_table->symbols[symbol_index].ic_value = *data_counter;
                     symbol_index++;
@@ -271,7 +283,10 @@ RC_t FIRST_PASS__process(char *input_file_path, int *instruction_counter, int *d
             case LINE_TYPE__DATA:
                 if (parsed_lines->line[line_index].label != NULL)
                 {
-                    symbol_table->symbols[symbol_index].symbol_name = parsed_lines->line[line_index].label;
+                    symbol_table->symbols[symbol_index].symbol_name = malloc(strlen(parsed_lines->line[line_index].label) + NULL_TERMINATOR_SIZE);
+                    EXIT_IF_NULL(symbol_table->symbols[symbol_index].symbol_name, FIRST_PASS__PROCESS__MEMORY_ALLOCATION_FAILURE);
+                    memset(symbol_table->symbols[symbol_index].symbol_name, 0, strlen(parsed_lines->line[line_index].label) + NULL_TERMINATOR_SIZE);
+                    memcpy(symbol_table->symbols[symbol_index].symbol_name, parsed_lines->line[line_index].label, strlen(parsed_lines->line[line_index].label));
                     symbol_table->symbols[symbol_index].attributes[0] = SYMBOL_DATA;
                     symbol_table->symbols[symbol_index].ic_value = *data_counter;
                     symbol_index++;

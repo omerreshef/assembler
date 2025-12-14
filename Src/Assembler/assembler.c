@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
     encoded_lines_t encoded_lines = {0};
 
     if (argc < 2) {
-        printf("No input files specified. Usage: %s <fileBase1> [fileBase2 ...]\n", argv[0]);
+        printf("No input files specified. Usage: %s <asFile1> [asFile2 ...]\n", argv[0]);
         return_code = SUCCESS;
         goto Exit;
     }
