@@ -158,7 +158,7 @@ RC_t second_pass__resolve_operand(char *operand, symbol_table_t *symbol_table, i
             goto Exit;
         }
         *operand_type = OPERAND_RELATIVE;
-        *operand_value = symbol_table->symbols[i].ic_value - (operand_ic + 1);
+        *operand_value = symbol_table->symbols[i].ic_value - (operand_ic);
     }
 
     else
@@ -259,6 +259,17 @@ RC_t second_pass__encode_instruction(parsed_line_t *instruction,
     operands_number = opcode_details.opcode_operands_number;
     encoded_line->words_type[0] = 'A';
 
+    if (first_operand_type == OPERAND_EXTERNAL)
+    {
+        /* External is encoded as direct operand */
+        first_operand_type = OPERAND_DIRECT;
+    }
+    if (second_operand_type == OPERAND_EXTERNAL)
+    {
+        /* External is encoded as direct operand */
+        second_operand_type = OPERAND_DIRECT;
+    }
+
     switch (operands_number)
     {
     case 0:
@@ -267,7 +278,7 @@ RC_t second_pass__encode_instruction(parsed_line_t *instruction,
         break;
 
     case 1:
-        encoded_line->encoded_line[0] = MAKE_MACHINE_CODE(opcode_value, opcode_funct, first_operand_type, 0);
+        encoded_line->encoded_line[0] = MAKE_MACHINE_CODE(opcode_value, opcode_funct, 0, first_operand_type);
         EXIT_ON_ERROR(second_pass__handle_instruction_operand(first_operand_value, first_operand_type, &encoded_line->encoded_line[1], &encoded_line->words_type[1]), &return_code);
         encoded_line->words_count = 2;
         break;
