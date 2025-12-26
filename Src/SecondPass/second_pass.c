@@ -223,11 +223,11 @@ RC_t second_pass__handle_instruction_operand(int operand_value, operand_type_t o
         break;
     case OPERAND_DIRECT:
         *encoded_operand = operand_value;
-        *word_type = 'E';
+        *word_type = 'R';
         break;
     case OPERAND_RELATIVE:
         *encoded_operand = operand_value;
-        *word_type = 'R';
+        *word_type = 'A';
         break;
     default:
         return_code = SECOND_PASS__HANDLE_INSTRUCTION_OPERAND__UNSUPPORTED_OPERAND_TYPE;
@@ -252,6 +252,8 @@ RC_t second_pass__encode_instruction(parsed_line_t *instruction,
     int opcode_value = 0;
     int opcode_funct = -1;
     int operands_number = 0;
+    operand_type_t first_operand_type_updated_value = first_operand_type;
+    operand_type_t second_operand_type_updated_value = second_operand_type;
 
     EXIT_ON_ERROR(ARCHITECTURE__get_opcode_details(instruction->opcode, &opcode_details), &return_code);
     opcode_value = opcode_details.opcode;
@@ -259,15 +261,15 @@ RC_t second_pass__encode_instruction(parsed_line_t *instruction,
     operands_number = opcode_details.opcode_operands_number;
     encoded_line->words_type[0] = 'A';
 
+    /* Update operand type values to match machine code encoding.
+     *  In case of external operands, they are treated as direct in machine code */
     if (first_operand_type == OPERAND_EXTERNAL)
     {
-        /* External is encoded as direct operand */
-        first_operand_type = OPERAND_DIRECT;
+        first_operand_type_updated_value = OPERAND_DIRECT;
     }
     if (second_operand_type == OPERAND_EXTERNAL)
     {
-        /* External is encoded as direct operand */
-        second_operand_type = OPERAND_DIRECT;
+        second_operand_type_updated_value = OPERAND_DIRECT;
     }
 
     switch (operands_number)
@@ -278,13 +280,13 @@ RC_t second_pass__encode_instruction(parsed_line_t *instruction,
         break;
 
     case 1:
-        encoded_line->encoded_line[0] = MAKE_MACHINE_CODE(opcode_value, opcode_funct, 0, first_operand_type);
+        encoded_line->encoded_line[0] = MAKE_MACHINE_CODE(opcode_value, opcode_funct, 0, first_operand_type_updated_value);
         EXIT_ON_ERROR(second_pass__handle_instruction_operand(first_operand_value, first_operand_type, &encoded_line->encoded_line[1], &encoded_line->words_type[1]), &return_code);
         encoded_line->words_count = 2;
         break;
     
     case 2:
-        encoded_line->encoded_line[0] = MAKE_MACHINE_CODE(opcode_value, opcode_funct, first_operand_type, second_operand_type);
+        encoded_line->encoded_line[0] = MAKE_MACHINE_CODE(opcode_value, opcode_funct, first_operand_type_updated_value, second_operand_type_updated_value);
         EXIT_ON_ERROR(second_pass__handle_instruction_operand(first_operand_value, first_operand_type, &encoded_line->encoded_line[1], &encoded_line->words_type[1]), &return_code);
         EXIT_ON_ERROR(second_pass__handle_instruction_operand(second_operand_value, second_operand_type, &encoded_line->encoded_line[2], &encoded_line->words_type[2]), &return_code);
         encoded_line->words_count = 3;
