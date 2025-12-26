@@ -36,16 +36,19 @@ RC_t second_pass__finalize_symbol_table(symbol_table_t *symbol_table, program_en
 
             if (strcmp(symbol_table->symbols[symbol_index].symbol_name, entries_list->entries[entry_index].entry_name) == 0)
             {
+                /* If the symbol is external, it cannot be an entry */
                 if (symbol_table->symbols[symbol_index].attributes[0] == SYMBOL_EXTERNAL)
                 {
                     return SECOND_PASS__FINALIZE_SYMBOL_TABLE__ENTRY_ON_EXTERN;
                 }
+                /* Mark the symbol as an entry */
                 symbol_table->symbols[symbol_index].attributes[1] = SYMBOL_ENTRY;
                 found_symbol = true;
                 break;
             }
         }
 
+        /* The symbol that related to the entry was not found */
         if (!found_symbol)
         {
             return_code = SECOND_PASS__FINALIZE_SYMBOL_TABLE__SYMBOL_NOT_FOUND;
@@ -84,16 +87,15 @@ RC_t second_pass__enter_new_extern_usage(extern_usages_t *extern_usages, int ope
         goto Exit;
     }
 
+    /* After finding an empty slot, setting the values of the extern usage */
     extern_usages->extern_usage[i].ic = operand_ic;
+    extern_usages->extern_usage[i].name = (char *)malloc(strlen(symbol_name) + NULL_TERMINATOR_SIZE);
+    if (extern_usages->extern_usage[i].name == NULL)
     {
-        extern_usages->extern_usage[i].name = (char *)malloc(strlen(symbol_name) + NULL_TERMINATOR_SIZE);
-        if (extern_usages->extern_usage[i].name == NULL)
-        {
-            return_code = SECOND_PASS__ENTER_NEW_EXTERN_USAGE__ALLOCATION_FAILED;
-            goto Exit;
-        }
-        memcpy(extern_usages->extern_usage[i].name, symbol_name, strlen(symbol_name) + NULL_TERMINATOR_SIZE);
+        return_code = SECOND_PASS__ENTER_NEW_EXTERN_USAGE__ALLOCATION_FAILED;
+        goto Exit;
     }
+    memcpy(extern_usages->extern_usage[i].name, symbol_name, strlen(symbol_name) + NULL_TERMINATOR_SIZE);
 
     return_code = SUCCESS;
 Exit:
@@ -151,6 +153,7 @@ RC_t second_pass__resolve_operand(char *operand, symbol_table_t *symbol_table, i
                 break;
             }
         }
+        /* After % character, there is a requirement for a label. If not found, return an error */
         if (!is_label)
         {
             printf("Label not found: %s\n", operand);
@@ -161,6 +164,7 @@ RC_t second_pass__resolve_operand(char *operand, symbol_table_t *symbol_table, i
         *operand_value = symbol_table->symbols[i].ic_value - (operand_ic);
     }
 
+    /* If reached here, the operand must be a label */
     else
     {
         for (i = 0; i < symbol_table->symbols_amount; i++)
@@ -210,6 +214,7 @@ RC_t second_pass__handle_instruction_operand(int operand_value, operand_type_t o
         goto Exit;
     }
 
+    /* Set the encoded operand and word type based on operand type */
     switch (operand_type)
     {
     case OPERAND_EXTERNAL:
@@ -255,6 +260,12 @@ RC_t second_pass__encode_instruction(parsed_line_t *instruction,
     operand_type_t first_operand_type_updated_value = first_operand_type;
     operand_type_t second_operand_type_updated_value = second_operand_type;
 
+    if (instruction == NULL || symbol_table == NULL || encoded_line == NULL)
+    {
+        return_code = SECOND_PASS__ENCODE_INSTRUCTION__NULL_ARGUMENT;
+        goto Exit;
+    }
+
     EXIT_ON_ERROR(ARCHITECTURE__get_opcode_details(instruction->opcode, &opcode_details), &return_code);
     opcode_value = opcode_details.opcode;
     opcode_funct = opcode_details.funct;
@@ -272,6 +283,7 @@ RC_t second_pass__encode_instruction(parsed_line_t *instruction,
         second_operand_type_updated_value = OPERAND_DIRECT;
     }
 
+    /* Based on the number of operands, encode the instruction */
     switch (operands_number)
     {
     case 0:
@@ -319,67 +331,70 @@ RC_t second_pass__encode_line(extern_usages_t *extern_usages, parsed_line_t *par
         goto Exit;
     }
 
+    /* Based on the line type, encode the line */
     switch (parsed_line->line_type)
     {
-        case LINE_TYPE__INSTRUCTION:
-            encoded_line->encoded_line = malloc(sizeof(int) * MAX_WORDS_IN_INSTRUCTION);
-            EXIT_IF_NULL(encoded_line->encoded_line, SECOND_PASS__ENCODE_INSTRUCTION__FAILED_MALLOC);
-            encoded_line->words_type = malloc(sizeof(char) * MAX_WORDS_IN_INSTRUCTION);
-            EXIT_IF_NULL(encoded_line->words_type, SECOND_PASS__ENCODE_INSTRUCTION__FAILED_MALLOC);
-            if (parsed_line->operands[0] != NULL)
-            {
-                EXIT_ON_ERROR(second_pass__resolve_operand(parsed_line->operands[0], symbol_table, parsed_line->line_ic + 1, &first_operand_value, &first_operand_type, extern_usages), &return_code);
-            }
+    case LINE_TYPE__INSTRUCTION:
+        encoded_line->encoded_line = malloc(sizeof(int) * MAX_WORDS_IN_INSTRUCTION);
+        EXIT_IF_NULL(encoded_line->encoded_line, SECOND_PASS__ENCODE_INSTRUCTION__FAILED_MALLOC);
+        encoded_line->words_type = malloc(sizeof(char) * MAX_WORDS_IN_INSTRUCTION);
+        EXIT_IF_NULL(encoded_line->words_type, SECOND_PASS__ENCODE_INSTRUCTION__FAILED_MALLOC);
+        if (parsed_line->operands[0] != NULL)
+        {
+            EXIT_ON_ERROR(second_pass__resolve_operand(parsed_line->operands[0], symbol_table, parsed_line->line_ic + 1, &first_operand_value, &first_operand_type, extern_usages), &return_code);
+        }
 
-            if (parsed_line->operands[1] != NULL)
-            {
-                EXIT_ON_ERROR(second_pass__resolve_operand(parsed_line->operands[1], symbol_table, parsed_line->line_ic + 2, &second_operand_value, &second_operand_type, extern_usages), &return_code);
-            }
-            EXIT_ON_ERROR(second_pass__encode_instruction(parsed_line, symbol_table, first_operand_value, second_operand_value, first_operand_type, second_operand_type, encoded_line) , &return_code);
-            break;
-        
-        case LINE_TYPE__DATA:
-            encoded_line->encoded_line = malloc(sizeof(int) * parsed_line->numbers_count);
+        if (parsed_line->operands[1] != NULL)
+        {
+            EXIT_ON_ERROR(second_pass__resolve_operand(parsed_line->operands[1], symbol_table, parsed_line->line_ic + 2, &second_operand_value, &second_operand_type, extern_usages), &return_code);
+        }
+        EXIT_ON_ERROR(second_pass__encode_instruction(parsed_line, symbol_table, first_operand_value, second_operand_value, first_operand_type, second_operand_type, encoded_line) , &return_code);
+        break;
+    
+    case LINE_TYPE__DATA:
+        encoded_line->encoded_line = malloc(sizeof(int) * parsed_line->numbers_count);
+        EXIT_IF_NULL(encoded_line->encoded_line, SECOND_PASS__ENCODE_INSTRUCTION__FAILED_MALLOC);
+        encoded_line->words_type = malloc(sizeof(char) * parsed_line->numbers_count);
+        EXIT_IF_NULL(encoded_line->words_type, SECOND_PASS__ENCODE_INSTRUCTION__FAILED_MALLOC);
+        for (i = 0; i < parsed_line->numbers_count; i++)
+        {
+            encoded_line->encoded_line[i] = parsed_line->numbers[i];
+            encoded_line->words_type[i] = 'A';
+        }
+        encoded_line->words_count = parsed_line->numbers_count;
+        break;
+
+    case LINE_TYPE__STRING:
+        {
+            encoded_line->encoded_line = malloc(sizeof(int) * (strlen(parsed_line->string) + NULL_TERMINATOR_SIZE));
             EXIT_IF_NULL(encoded_line->encoded_line, SECOND_PASS__ENCODE_INSTRUCTION__FAILED_MALLOC);
-            encoded_line->words_type = malloc(sizeof(char) * parsed_line->numbers_count);
+            encoded_line->words_type = malloc(sizeof(char) * (strlen(parsed_line->string) + NULL_TERMINATOR_SIZE));
             EXIT_IF_NULL(encoded_line->words_type, SECOND_PASS__ENCODE_INSTRUCTION__FAILED_MALLOC);
-            for (i = 0; i < parsed_line->numbers_count; i++)
+            for (i = 0; i < strlen(parsed_line->string); i++)
             {
-                encoded_line->encoded_line[i] = parsed_line->numbers[i];
+                encoded_line->encoded_line[i] = (int)parsed_line->string[i];
                 encoded_line->words_type[i] = 'A';
             }
-            encoded_line->words_count = parsed_line->numbers_count;
-            break;
 
-        case LINE_TYPE__STRING:
-            {
-                encoded_line->encoded_line = malloc(sizeof(int) * (strlen(parsed_line->string) + NULL_TERMINATOR_SIZE));
-                EXIT_IF_NULL(encoded_line->encoded_line, SECOND_PASS__ENCODE_INSTRUCTION__FAILED_MALLOC);
-                encoded_line->words_type = malloc(sizeof(char) * (strlen(parsed_line->string) + NULL_TERMINATOR_SIZE));
-                EXIT_IF_NULL(encoded_line->words_type, SECOND_PASS__ENCODE_INSTRUCTION__FAILED_MALLOC);
-                for (i = 0; i < strlen(parsed_line->string); i++)
-                {
-                    encoded_line->encoded_line[i] = (int)parsed_line->string[i];
-                    encoded_line->words_type[i] = 'A';
-                }
-
-                encoded_line->words_type[i] = 'A';
-                encoded_line->encoded_line[i] = 0; /* Null terminator */
-                encoded_line->words_count = strlen(parsed_line->string) + NULL_TERMINATOR_SIZE;
-            }
-            break;
-        
-        case LINE_TYPE__EMPTY:
-        case LINE_TYPE__EXTERN:
-        case LINE_TYPE__ENTRY:
-            return_code = SECOND_PASS__ENCODE_LINE__UNSOPPORTED_LINE_TYPE;
-            goto Exit;
-            break;
-        
-        default:
-            return_code = SECOND_PASS__ENCODE_LINE__INVALID_LINE_TYPE;
-            goto Exit;
-            break;
+            encoded_line->words_type[i] = 'A';
+            encoded_line->encoded_line[i] = 0; /* Null terminator */
+            encoded_line->words_count = strlen(parsed_line->string) + NULL_TERMINATOR_SIZE;
+        }
+        break;
+    
+    /* EXTERN, ENTRY and EMPTY lines are not encoded */
+    case LINE_TYPE__EMPTY:
+    case LINE_TYPE__EXTERN:
+    case LINE_TYPE__ENTRY:
+        return_code = SECOND_PASS__ENCODE_LINE__UNSOPPORTED_LINE_TYPE;
+        goto Exit;
+        break;
+    
+    /* We should not reach this point because all line types are handled */
+    default:
+        return_code = SECOND_PASS__ENCODE_LINE__INVALID_LINE_TYPE;
+        goto Exit;
+        break;
     }
 
 
@@ -407,6 +422,7 @@ RC_t second_pass__get_sorted_parsed_lines(parsed_lines_t *parsed_lines, parsed_l
         {
             break;
         }
+        /* Insert instructions first */
         if (parsed_lines->line[i].line_type == LINE_TYPE__INSTRUCTION)
         {
             sorted_lines->line[total_inserted_lines] = parsed_lines->line[i];
@@ -420,6 +436,7 @@ RC_t second_pass__get_sorted_parsed_lines(parsed_lines_t *parsed_lines, parsed_l
         {
             break;
         }
+        /* Insert data and string lines after instructions */
         if (parsed_lines->line[j].line_type == LINE_TYPE__DATA || parsed_lines->line[j].line_type == LINE_TYPE__STRING)
         {
             sorted_lines->line[total_inserted_lines] = parsed_lines->line[j];
@@ -445,6 +462,7 @@ RC_t second_pass__count_extern_usages(parsed_lines_t *parsed_lines, symbol_table
         goto Exit;
     }
 
+    /* for every instruction, check if it uses an external symbol */
     for (i = 0; i < MAX_LINES_IN_FILE; i++)
     {
         if (parsed_lines->line[i].line_type == LINE_TYPE__INSTRUCTION)
