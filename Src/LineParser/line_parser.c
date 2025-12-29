@@ -263,10 +263,16 @@ RC_t LINE_PARSER__parse_line(const char *line_buffer, parsed_line_t *parsed_line
         }
         parsed_line->line_type = LINE_TYPE__ENTRY;
         entry_name = strchr(line_pointer, ' ');
+        if (entry_name == NULL)
+        {
+            printf("Error: No entry name found in entry declaration: %s\n", line_pointer);
+            return_code = LINE_PARSER__PARSE_LINE__NO_ENTRY_NAME_FOUND;
+            goto Exit;
+        }
         entry_name++; /* Skip space character to the start if the entry name*/
         parsed_line->entry_name = malloc(strlen(entry_name) + NULL_TERMINATOR_SIZE);
-        memset(parsed_line->entry_name, '\0', strlen(entry_name) + NULL_TERMINATOR_SIZE);
         EXIT_IF_NULL(parsed_line->entry_name, LINE_PARSER__PARSE_LINE__ALLOCATION_ERROR);
+        memset(parsed_line->entry_name, '\0', strlen(entry_name) + NULL_TERMINATOR_SIZE);
         (void)memcpy(parsed_line->entry_name, entry_name, strlen(entry_name));
     }
     else if (strstr(line_pointer, ".extern"))
