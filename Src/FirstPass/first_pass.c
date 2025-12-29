@@ -217,7 +217,11 @@ RC_t FIRST_PASS__process(char *input_file_path, int *instruction_counter, int *d
                 return_code != LINE_PARSER__PARSE_LINE__NO_ENTRY_NAME_FOUND && 
                 return_code != LINE_PARSER__PARSE_LINE__LABEL_IN_EXTERN && 
                 return_code != LINE_PARSER__PARSE_LINE__NO_EXTERN_NAME && 
-                return_code != LINE_PARSER__PARSE_LINE__INVALID_OPCDODE)
+                return_code != LINE_PARSER__PARSE_LINE__INVALID_OPCDODE &&
+                return_code != LINE_PARSER__PARSE_INSTRUCTION_OPERANDS__NO_COMMA_BETWEEN_OPERANDS &&
+                return_code != LINE_PARSER__PARSE_INSTRUCTION_OPERANDS__NO_OPERANDS_EXPECTED &&
+                return_code != LINE_PARSER__PARSE_DATA_NUMBERS__NO_DATA_VALUES &&
+                return_code != LINE_PARSER__PARSE_DATA_NUMBERS__INVALID_DATA_VALUE)
             {
                 goto Exit;
             }

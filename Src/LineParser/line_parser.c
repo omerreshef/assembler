@@ -32,6 +32,7 @@ RC_t line_parser__parse_instruction_operands(const char* opcode, const char* arg
         /* Two operands expected */
         if (comma_position == NULL)
         {
+            printf("Error: No comma found between operands for opcode %s with arguments %s\n", opcode, arguments);
             return_code = LINE_PARSER__PARSE_INSTRUCTION_OPERANDS__NO_COMMA_BETWEEN_OPERANDS;
             goto Exit;
         }
