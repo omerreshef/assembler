@@ -44,10 +44,12 @@ int main(int argc, char *argv[])
         goto Exit;
     }
 
+    /* For every input file, execute the same assembler program */
     for (i = 1; i < argc; ++i) {
         current_arg = argv[i];
         base_len = strlen(current_arg);
 
+        /* allocate memory for all the file names creating in the assembler program */
         input_as = (char *)malloc(base_len + strlen(FILE_EXTENSTION_ASM) + NULL_TERMINATOR_SIZE);
         temp_file = (char *)malloc(base_len + strlen(TEMP_FILE_EXTENSTION) + NULL_TERMINATOR_SIZE);
         am_file = (char *)malloc(base_len + strlen(FILE_EXTENSTION_AM) + NULL_TERMINATOR_SIZE);
@@ -61,6 +63,7 @@ int main(int argc, char *argv[])
             goto Exit;
         }
 
+        /* set file names - all file names are the same but with different suffix */
         sprintf(input_as, "%s.as", current_arg);
         sprintf(temp_file, "%s.tmp", current_arg);
         sprintf(am_file, "%s.am", current_arg);
@@ -85,12 +88,14 @@ int main(int argc, char *argv[])
         memset(&extern_usages, 0, sizeof(extern_usages));
         memset(&encoded_lines, 0, sizeof(encoded_lines));
 
+        /* Prepare file to pre assembler part - remove extra spaces and tabs */
         return_code = TEXT_EDITOR__remove_spaces_and_tabs_in_given_path(input_as, temp_file);
         if (return_code != SUCCESS) {
             fprintf(stderr, "Failed to remove spaces and tabs from '%s'\n", input_as);
             goto Cleanup;
         }
 
+        /* Pre assmbler part - analyze macros */
         return_code = MCRO_READER__convert_mcros_to_instructions(temp_file, am_file);
         if (return_code != SUCCESS) {
             fprintf(stderr, "Failed the preprocessing part on %s.\n", input_as);
@@ -99,18 +104,21 @@ int main(int argc, char *argv[])
 
         EXIT_ON_ERROR(FILE__delete(temp_file), &return_code);
 
+        /* Assembler first pass */
         return_code = FIRST_PASS__process(am_file, &instruction_counter, &data_counter, &parsed_lines, &symbol_table, &entries_list, &encoded_lines);
         if (return_code != SUCCESS) {
             fprintf(stderr, "Failed the first pass on %s.\n", input_as);
             goto Cleanup;
         }
 
+        /* Assembler second part */
         return_code = SECOND_PASS__process(&parsed_lines, &symbol_table, &entries_list, &extern_usages, &encoded_lines);
         if (return_code != SUCCESS) {
             fprintf(stderr, "Failed the second pass on %s.\n", input_as);
             goto Cleanup;
         }
 
+        /* After the second pass, write output to ent file */
         return_code = FILES_CREATOR__create_ent_file(ent_file, &symbol_table);
         /* There is a chance that there are no entries to write so the file is not created */
         if (return_code != SUCCESS && return_code != FILES_CREATOR__NO_ENTRIES_TO_WRITE) {
@@ -118,6 +126,7 @@ int main(int argc, char *argv[])
             goto Cleanup;
         }
 
+        /* After the second pass, write output to ext file */
         return_code = FILES_CREATOR__create_ext_file(ext_file, &extern_usages);
         /* There is a chance that there are no extern usages to write so the file is not created */
         if (return_code != SUCCESS && return_code != FILES_CREATOR__NO_EXTERN_USAGES_TO_WRITE) {
@@ -125,6 +134,7 @@ int main(int argc, char *argv[])
             goto Cleanup;
         }
 
+        /* After the second pass, write output to ob file */
         return_code = FILES_CREATOR__create_asm_file(ob_file, &encoded_lines, &parsed_lines);
         if (return_code != SUCCESS) {
             fprintf(stderr, "Failed creating ob file on %s.\n", input_as);
@@ -195,6 +205,7 @@ Exit:
         free(ob_file);
     }
 
+    /* free per-file allocated memory for parsed/encoded structures */
     (void)MEMORY_CLEANER__clean_allocated_memory(&parsed_lines, &encoded_lines, &extern_usages, &symbol_table, &entries_list);
 
     return return_code;

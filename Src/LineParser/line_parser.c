@@ -36,12 +36,14 @@ RC_t line_parser__parse_instruction_operands(const char* opcode, const char* arg
             goto Exit;
         }
 
+        /* Parse first operand */
         first_operand_length = (int)(comma_position - arguments);
         parsed_line->operands[0] = malloc(first_operand_length + 1);
         EXIT_IF_NULL(parsed_line->operands[0], LINE_PARSER__PARSE_INSTRUCTION_OPERANDS__ALLOCATION_ERROR);
         (void)memset(parsed_line->operands[0], '\0', first_operand_length + 1);
         (void)memcpy(parsed_line->operands[0], arguments, first_operand_length);
 
+        /* Parse second operand */
         second_operand_start = comma_position + 1;
         second_operand_length = (int)strlen(second_operand_start);
         parsed_line->operands[1] = malloc(second_operand_length + 1);
@@ -75,7 +77,7 @@ RC_t line_parser__parse_instruction_operands(const char* opcode, const char* arg
         if (strlen(arguments) != 0)
         {
             /* No operands expected */
-            printf("Expected no operands but found some on %s\n", opcode);
+            printf("Expected no operands but found some on %s - %s\n", opcode, arguments);
             return_code = LINE_PARSER__PARSE_INSTRUCTION_OPERANDS__NO_OPERANDS_EXPECTED;
             goto Exit;
         }
@@ -136,12 +138,14 @@ RC_t line_parser__parse_data_numbers(char* data, parsed_line_t *parsed_line)
     numbers = malloc((numbers_amount) * sizeof(int));
     EXIT_IF_NULL(numbers, LINE_PARSER__PARSE_DATA_NUMBERS__ALLOCATION_ERROR);
 
+    /* Create a copy of the data for the numbers parsing */
     numbers_copy = malloc(strlen(data) + NULL_TERMINATOR_SIZE);
     EXIT_IF_NULL(numbers_copy, LINE_PARSER__PARSE_DATA_NUMBERS__ALLOCATION_ERROR);
     memset(numbers_copy, '\0', strlen(data) + NULL_TERMINATOR_SIZE);
     memcpy(numbers_copy, data, strlen(data));
 
 
+    /* Parse all the given numbers */
     token = strtok(numbers_copy, ",");
     while (token != NULL && token_index < numbers_amount) {
         numbers[token_index] = (int)strtol(token, &end_pointer, 10);
@@ -248,7 +252,7 @@ RC_t LINE_PARSER__parse_line(const char *line_buffer, parsed_line_t *parsed_line
         (void)memset(parsed_line->string, '\0', string_length + NULL_TERMINATOR_SIZE);
         (void)memcpy(parsed_line->string, line_pointer, string_length);
 
-    } 
+    }
     else if (strstr(line_pointer, ".entry"))
     {
         if (label_end != NULL) 
@@ -287,6 +291,7 @@ RC_t LINE_PARSER__parse_line(const char *line_buffer, parsed_line_t *parsed_line
         EXIT_IF_NULL(parsed_line->extern_name, LINE_PARSER__PARSE_LINE__ALLOCATION_ERROR);
         (void)memcpy(parsed_line->extern_name, extern_name, strlen(extern_name));
     } 
+    /* If reached here, the line must be an instruction */
     else 
     {
         parsed_line->line_type = LINE_TYPE__INSTRUCTION;

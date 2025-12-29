@@ -25,6 +25,7 @@ RC_t first_pass__detect_symbols_duplication(symbol_table_t *symbol_table, int sy
     {
         for (j = 0; j < symbols_amount; j++)
         {
+            /* Looking for the same symbol name that used twice in the same program */
             if (i != j && strcmp(symbol_table->symbols[i].symbol_name, symbol_table->symbols[j].symbol_name) == 0)
             {
                 return_code = FIRST_PASS__DETECT_SYMBOLS_DUPLICATION__FOUND_DUPLICATION;
@@ -53,6 +54,7 @@ RC_t first_pass__detect_entries_duplication(program_entries_t *entries_list, int
     {
         for (j = 0; j < entries_amount; j++)
         {
+            /* Looking for the same entry name that used twice in the same program */
             if (i != j && strcmp(entries_list->entries[i].entry_name, entries_list->entries[j].entry_name) == 0)
             {
                 return_code = FIRST_PASS__DETECT_ENTRIES_DUPLICATION__FOUND_DUPLICATION;
@@ -112,6 +114,7 @@ RC_t first_pass__allocate_structures_memory(parsed_lines_t *parsed_lines, symbol
         }
     }
 
+    /* Allocate memory for symbol table */
     if (symbols_amount > 0)
     {
         symbol_table->symbols = (symbol_t *)malloc(sizeof(symbol_t) * symbols_amount);
@@ -126,6 +129,7 @@ RC_t first_pass__allocate_structures_memory(parsed_lines_t *parsed_lines, symbol
         symbol_table->symbols_amount = 0;
     }
 
+    /* Allocate memory for entries list */
     if (entries_amount > 0)
     {
         entries_list->entries = (program_entry_t *)malloc(sizeof(program_entry_t) * entries_amount);
@@ -139,6 +143,7 @@ RC_t first_pass__allocate_structures_memory(parsed_lines_t *parsed_lines, symbol
         entries_list->entries_amount = 0;
     }
 
+    /* Allocate memory for encoded lines object */
     if (lines_amount > 0)
     {
         encoded_lines->encoded_line = (encoded_line_t *)malloc(sizeof(encoded_line_t) * lines_amount);
@@ -186,6 +191,7 @@ RC_t FIRST_PASS__process(char *input_file_path, int *instruction_counter, int *d
     EXIT_ON_ERROR(FILE__open(input_file_path, &input_file, "r"), &return_code);
 
 
+    /* Parse every program line and save the parsing result in parsed_lines object */
     for (line_index = 0; line_index < MAX_LINES_IN_FILE; line_index++)
     {
         return_code = FILE__read_line(input_file, line_buffer, sizeof(line_buffer));
@@ -214,6 +220,7 @@ RC_t FIRST_PASS__process(char *input_file_path, int *instruction_counter, int *d
     lines_amount = line_index;
     EXIT_ON_ERROR(first_pass__allocate_structures_memory(parsed_lines, symbol_table, entries_list, encoded_lines, lines_amount), &return_code);
 
+    /* Analyze every line of the program - set line type (symbol/instruction/..), ic value, etc */
     for (line_index = 0; line_index < MAX_LINES_IN_FILE; line_index++)
     {
         if (parsed_lines->line[line_index].line_type == LINE_TYPE__UNINITIALIZED)
@@ -302,6 +309,7 @@ RC_t FIRST_PASS__process(char *input_file_path, int *instruction_counter, int *d
         }
     }
 
+    /* Exit in case of symbol or entry multiple uses */
     EXIT_ON_ERROR(first_pass__detect_symbols_duplication(symbol_table, symbol_index), &return_code);
     EXIT_ON_ERROR(first_pass__detect_entries_duplication(entries_list, entry_index), &return_code);
 

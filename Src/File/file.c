@@ -13,6 +13,7 @@ RC_t FILE__is_exists(const char *file_path, bool *exists)
         goto Exit;
     }
 
+    /* If the file is opened, it exists. */
     file_pointer = fopen(file_path, "r");
     if (file_pointer != NULL)
     {
@@ -80,6 +81,7 @@ RC_t FILE__read_line(FILE *file_pointer, char *buffer, size_t buffer_size)
         goto Exit;
     }
 
+    /* Read a single line, handle a case of error */
     if (fgets(buffer, buffer_size, file_pointer) == NULL)
     {
         if (feof(file_pointer))

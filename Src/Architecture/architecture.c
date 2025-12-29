@@ -53,6 +53,7 @@ RC_t ARCHITECTURE__is_instruction(char *name, bool *is_instruction)
         goto Exit;
     }
 
+    /* Find if the given string equal to some instruction of INSTRUCTIONS list */
     for (i = 0; i < sizeof(INSTRUCTIONS) / sizeof(incstruction_t); i++)
     {
         if (strcmp(name, INSTRUCTIONS[i].instruction_name) == 0)
@@ -81,6 +82,7 @@ RC_t ARCHITECTURE__is_opcode(char *name, bool *is_opcode)
         goto Exit;
     }
 
+    /* Find if the given string equal to some opcode of OPCODES list */
     for (i = 0; i < sizeof(OPCODES) / sizeof(opcode_t); i++)
     {
         if (strcmp(name, OPCODES[i].opcode_name) == 0)
@@ -109,6 +111,7 @@ RC_t ARCHITECTURE__is_register(char *name, bool *is_register)
         goto Exit;
     }
 
+    /* Find if the given string equal to some register of REGISTERS list */
     for (i = 0; i < sizeof(REGISTERS) / sizeof(register_t); i++)
     {
         if (strcmp(name, REGISTERS[i].register_name) == 0)
@@ -137,6 +140,7 @@ RC_t ARCHITECTURE__get_register_value(char *name, int *register_value)
         goto Exit;
     }
 
+    /* Find the binary representation of given string */
     for (i = 0; i < sizeof(REGISTERS) / sizeof(register_t); i++)
     {
         if (strcmp(name, REGISTERS[i].register_name) == 0)
@@ -173,6 +177,7 @@ RC_t ARCHITECTURE__get_opcode_details(char *opcode_name, opcode_t *opcode_detail
         goto Exit;
     }
 
+    /* After finding the correct opcode, copy the opcode details to the given pointer address */
     for (i = 0; i < sizeof(OPCODES) / sizeof(opcode_t); i++)
     {
         if (strcmp(opcode_name, OPCODES[i].opcode_name) == 0)

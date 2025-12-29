@@ -20,6 +20,7 @@ RC_t FILES_CREATOR__create_ext_file(const char *file_path, extern_usages_t *exte
         goto Exit;
     }
 
+    /* Count extern usages in the program */
     for (i = 0; i < extern_usages->extern_usages_amount; i++)
     {
         if (extern_usages->extern_usage[i].name != NULL)
@@ -41,6 +42,7 @@ RC_t FILES_CREATOR__create_ext_file(const char *file_path, extern_usages_t *exte
         goto Exit;
     }
 
+    /* Write each extern usage in the target file */
     for (i = 0; i < extern_usages->extern_usages_amount; i++)
     {
         if (extern_usages->extern_usage[i].name != NULL)
@@ -71,6 +73,7 @@ RC_t FILES_CREATOR__create_ent_file(const char *file_path, symbol_table_t *symbo
         goto Exit;
     }
 
+    /* Count entries amount in the program */
     for (i = 0; i < symbol_table->symbols_amount; i++)
     {
         if (symbol_table->symbols[i].symbol_name == NULL)
@@ -96,7 +99,7 @@ RC_t FILES_CREATOR__create_ent_file(const char *file_path, symbol_table_t *symbo
         goto Exit;
     }
 
-
+    /* Write all the entries to the destination file */
     for (i = 0; i < symbol_table->symbols_amount; i++)
     {
         if (symbol_table->symbols[i].symbol_name == NULL)
@@ -135,6 +138,7 @@ RC_t files_creator__get_obj_file_header(parsed_lines_t *parsed_lines, int *instr
         {
             break;
         }
+        /* If the line is an instcution, increase the instruction image size */
         if (parsed_lines->line[i].line_type == LINE_TYPE__INSTRUCTION)
         {
             (*instruction_image_size)++;
@@ -147,10 +151,12 @@ RC_t files_creator__get_obj_file_header(parsed_lines_t *parsed_lines, int *instr
                 (*instruction_image_size)++;
             }
         }
+        /* If the line is a string, increase the data image size */
         if (parsed_lines->line[i].line_type == LINE_TYPE__STRING)
         {
             (*data_image_size) += (strlen(parsed_lines->line[i].string) + NULL_TERMINATOR_SIZE);
         }
+        /* If the line is a data, increase the data image size */
         if (parsed_lines->line[i].line_type == LINE_TYPE__DATA)
         {
             (*data_image_size) += parsed_lines->line[i].numbers_count;
@@ -194,6 +200,7 @@ RC_t FILES_CREATOR__create_asm_file(const char *file_path, encoded_lines_t *enco
         {
             break;
         }
+        /* Write the encoded machine code lines of the current encoded instruction to to ob file. */
         for (j = 0; j < encoded_lines->encoded_line[i].words_count; j++)
         {
             fprintf(asm_file, "%04d %03X %c\n", ic, encoded_lines->encoded_line[i].encoded_line[j] & 0xFFF, encoded_lines->encoded_line[i].words_type[j]);

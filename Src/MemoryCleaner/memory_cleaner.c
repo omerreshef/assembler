@@ -9,9 +9,9 @@ void MEMORY_CLEANER__clean_allocated_memory(parsed_lines_t *parsed_lines, encode
     int i = 0;
     int l = 0;
 
-
     if (parsed_lines != NULL)
     {
+        /* In every parsed_line_t object, free the allocated objects of the line */
         for (i = 0; i < MAX_LINES_IN_FILE; i++)
         {
             if (parsed_lines->line[i].line_type == LINE_TYPE__UNINITIALIZED)
@@ -69,6 +69,7 @@ void MEMORY_CLEANER__clean_allocated_memory(parsed_lines_t *parsed_lines, encode
     {
         if (encoded_lines->encoded_line != NULL)
         {
+            /* In every encoded_line_t object, free the allocated line objects */
             for (l = 0; l < encoded_lines->encoded_lines_amount; l++)
             {
                 if (encoded_lines->encoded_line[l].encoded_line != NULL)
@@ -94,6 +95,7 @@ void MEMORY_CLEANER__clean_allocated_memory(parsed_lines_t *parsed_lines, encode
     {
         if (symbol_table->symbols != NULL)
         {
+            /* Free each object in the symbol table */
             for (i = 0; i < symbol_table->symbols_amount; i++)
             {
                 if (symbol_table->symbols[i].symbol_name != NULL)
@@ -113,6 +115,7 @@ void MEMORY_CLEANER__clean_allocated_memory(parsed_lines_t *parsed_lines, encode
     {
         if (entries_list->entries != NULL)
         {
+            /* Free every allocated entry object from the entries list */
             for (i = 0; i < entries_list->entries_amount; i++)
             {
                 if (entries_list->entries[i].entry_name != NULL)
@@ -131,6 +134,7 @@ void MEMORY_CLEANER__clean_allocated_memory(parsed_lines_t *parsed_lines, encode
     {
         if (extern_usages->extern_usage != NULL)
         {
+            /* Free every allocated extern usage object */
             for (i = 0; i < extern_usages->extern_usages_amount; i++)
             {
                 if (extern_usages->extern_usage[i].name != NULL)
