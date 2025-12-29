@@ -44,17 +44,36 @@ RC_t text_editor__remove_spaces_and_tabs_near_comma(char *input_line, char *outp
     return SUCCESS;
 }
 
-RC_t text_editor__remove_spaces_and_tabs_from_line(char *input_line, char *output_line)
+RC_t text_editor__remove_spaces_and_tabs_and_comments_from_line(char *input_line, char *output_line)
 {
     RC_t return_code = UNINITIALIZED;
     size_t input_index = 0;
     size_t output_index = 0;
+    size_t len_without_comments = 0;
     char temporarty_line[MAX_LINE_LENGTH] = {0};
-
+    char cleaned_line[MAX_LINE_LENGTH] = {0};
+    
     if (input_line == NULL || output_line == NULL)
     {
-        return_code = TEXT_EDITOR__REMOVE_SPACES_AND_TABS_FROM_LINE__NULL_ARGUMENT;
+        return_code = TEXT_EDITOR__REMOVE_SPACES_AND_TABS_AND_COMMENTS_FROM_LINE__NULL_ARGUMENT;
         goto Exit;
+    }
+
+    /* Remove inline comment: anything after ';' should be ignored */
+    if (input_line != NULL)
+    {
+        char *comment_pos = strchr(input_line, ';');
+        if (comment_pos != NULL)
+        {
+            len_without_comments = (size_t)(comment_pos - input_line);
+            if (len_without_comments >= MAX_LINE_LENGTH)
+            {
+                len_without_comments = MAX_LINE_LENGTH - 1;
+            }
+            memcpy(cleaned_line, input_line, len_without_comments);
+            cleaned_line[len_without_comments] = '\0';
+            input_line = cleaned_line;
+        }
     }
 
     /* Skip spaces and tabs at the beginning */
@@ -107,7 +126,7 @@ Exit:
     return return_code;
 }
 
-RC_t text_editor__remove_spaces_and_tabs_from_file(FILE *input_file, FILE *output_file)
+RC_t text_editor__remove_spaces_and_tabs_and_comments_from_file(FILE *input_file, FILE *output_file)
 {
     RC_t return_code = UNINITIALIZED;
     char line_buffer[MAX_LINE_LENGTH];
@@ -115,7 +134,7 @@ RC_t text_editor__remove_spaces_and_tabs_from_file(FILE *input_file, FILE *outpu
 
     if (input_file == NULL || output_file == NULL)
     {
-        return_code = TEXT_EDITOR__REMOVE_SPACES_AND_TABS_FROM_FILE__NULL_ARGUMENT;
+        return_code = TEXT_EDITOR__REMOVE_SPACES_AND_TABS_AND_COMMENTS_FROM_FILE__NULL_ARGUMENT;
         goto Exit;
     }
 
@@ -134,9 +153,12 @@ RC_t text_editor__remove_spaces_and_tabs_from_file(FILE *input_file, FILE *outpu
             goto Exit;
         }
 
-        EXIT_ON_ERROR(text_editor__remove_spaces_and_tabs_from_line(line_buffer, modified_line), &return_code);
+        EXIT_ON_ERROR(text_editor__remove_spaces_and_tabs_and_comments_from_line(line_buffer, modified_line), &return_code);
+        if (strlen(modified_line) > 0)
+        {
+            fprintf(output_file, "%s\n", modified_line);
+        }
 
-        fprintf(output_file, "%s\n", modified_line);
     }
 
     return_code = SUCCESS;
@@ -144,7 +166,7 @@ Exit:
     return return_code;
 }
 
-RC_t TEXT_EDITOR__remove_spaces_and_tabs_in_given_path(const char *input_file_path, char *new_file_path)
+RC_t TEXT_EDITOR__remove_spaces_and_tabs_and_comments_in_given_path(const char *input_file_path, char *new_file_path)
 {
     RC_t return_code = UNINITIALIZED;
     FILE *input_file = NULL;
@@ -152,14 +174,14 @@ RC_t TEXT_EDITOR__remove_spaces_and_tabs_in_given_path(const char *input_file_pa
 
     if (input_file_path == NULL || new_file_path == NULL)
     {
-        return_code = TEXT_EDITOR__REMOVE_SPACES_AND_TABS_IN_GIVEN_PATH__NULL_ARGUMENT;
+        return_code = TEXT_EDITOR__REMOVE_SPACES_AND_TABS_AND_COMMENTS_IN_GIVEN_PATH__NULL_ARGUMENT;
         goto Exit;
     }
 
     EXIT_ON_ERROR(FILE__open(input_file_path, &input_file, "r"), &return_code);
     EXIT_ON_ERROR(FILE__open(new_file_path, &output_file, "w"), &return_code);
 
-    EXIT_ON_ERROR(text_editor__remove_spaces_and_tabs_from_file(input_file, output_file), &return_code);
+    EXIT_ON_ERROR(text_editor__remove_spaces_and_tabs_and_comments_from_file(input_file, output_file), &return_code);
 
     return_code = SUCCESS;
 Exit:

@@ -103,7 +103,7 @@ Exit:
 }
 
 
-RC_t second_pass__resolve_operand(char *operand, symbol_table_t *symbol_table, int operand_ic, int *operand_value, operand_type_t *operand_type, extern_usages_t *extern_usages)
+RC_t second_pass__resolve_operand(char *operand, char* opcode, symbol_table_t *symbol_table, int operand_ic, int *operand_value, operand_type_t *operand_type, extern_usages_t *extern_usages)
 {
     RC_t return_code = UNINITIALIZED;
     char *end_pointer = NULL;
@@ -131,7 +131,7 @@ RC_t second_pass__resolve_operand(char *operand, symbol_table_t *symbol_table, i
         *operand_value = (int)strtol(operand, &end_pointer, 10);
         if (*end_pointer != '\0')
         {
-            printf("Error converting immediate operand to integer: %s\n", operand);
+            printf("Error converting immediate operand to integer: %s in opcode %s\n", operand, opcode);
             return_code = SECOND_PASS__RESOLVE_OPERAND__STRTOL_ERROR;
             goto Exit;
         }
@@ -156,7 +156,7 @@ RC_t second_pass__resolve_operand(char *operand, symbol_table_t *symbol_table, i
         /* After % character, there is a requirement for a label. If not found, return an error */
         if (!is_label)
         {
-            printf("Label not found: %s\n", operand);
+            printf("Label not found: %s in opcode %s\n", operand, opcode);
             return_code = SECOND_PASS__RESOLVE_OPERAND__LABEL_NOT_FOUND;
             goto Exit;
         }
@@ -181,7 +181,7 @@ RC_t second_pass__resolve_operand(char *operand, symbol_table_t *symbol_table, i
         }
         if (!is_label)
         {
-            printf("Error unrecognized operand: %s\n", operand);
+            printf("Error unrecognized operand: %s in opcode %s\n", operand, opcode);
             return_code = SECOND_PASS__RESOLVE_OPERAND__UNRECOGNIZED_OPERAND;
             goto Exit;
         }
@@ -341,12 +341,12 @@ RC_t second_pass__encode_line(extern_usages_t *extern_usages, parsed_line_t *par
         EXIT_IF_NULL(encoded_line->words_type, SECOND_PASS__ENCODE_INSTRUCTION__FAILED_MALLOC);
         if (parsed_line->operands[0] != NULL)
         {
-            EXIT_ON_ERROR(second_pass__resolve_operand(parsed_line->operands[0], symbol_table, parsed_line->line_ic + 1, &first_operand_value, &first_operand_type, extern_usages), &return_code);
+            EXIT_ON_ERROR(second_pass__resolve_operand(parsed_line->operands[0], parsed_line->opcode, symbol_table, parsed_line->line_ic + 1, &first_operand_value, &first_operand_type, extern_usages), &return_code);
         }
 
         if (parsed_line->operands[1] != NULL)
         {
-            EXIT_ON_ERROR(second_pass__resolve_operand(parsed_line->operands[1], symbol_table, parsed_line->line_ic + 2, &second_operand_value, &second_operand_type, extern_usages), &return_code);
+            EXIT_ON_ERROR(second_pass__resolve_operand(parsed_line->operands[1], parsed_line->opcode, symbol_table, parsed_line->line_ic + 2, &second_operand_value, &second_operand_type, extern_usages), &return_code);
         }
         EXIT_ON_ERROR(second_pass__encode_instruction(parsed_line, symbol_table, first_operand_value, second_operand_value, first_operand_type, second_operand_type, encoded_line) , &return_code);
         break;

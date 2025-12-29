@@ -207,7 +207,20 @@ RC_t FIRST_PASS__process(char *input_file_path, int *instruction_counter, int *d
         if (return_code != SUCCESS)
         {
             is_line_valid = false;
-            goto Exit;
+            /* If we failed parsing the line, but the error is related to invalid syntax,
+             * we continue to parse the other lines in order to detect another syntax error
+             * and print a message to the user for it.
+             * If the error is not related to syntax, exit.
+             * */
+            if (return_code != LINE_PARSER__PARSE_LINE__NO_QUOTE_IN_STRING && 
+                return_code != LINE_PARSER__PARSE_LINE__LABEL_IN_ENTRY && 
+                return_code != LINE_PARSER__PARSE_LINE__NO_ENTRY_NAME_FOUND && 
+                return_code != LINE_PARSER__PARSE_LINE__LABEL_IN_EXTERN && 
+                return_code != LINE_PARSER__PARSE_LINE__NO_EXTERN_NAME && 
+                return_code != LINE_PARSER__PARSE_LINE__INVALID_OPCDODE)
+            {
+                goto Exit;
+            }
         }
     }
 

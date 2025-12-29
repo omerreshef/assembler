@@ -20,7 +20,7 @@ RC_t text_editor__remove_spaces_and_tabs_near_comma(char *input_line, char *outp
  * 
  * On success, writes the modified line into @output_line and returns SUCCESS.
  */
-RC_t text_editor__remove_spaces_and_tabs_from_line(char *input_line, char *output_line);
+RC_t text_editor__remove_spaces_and_tabs_and_comments_from_line(char *input_line, char *output_line);
 
 /**
  * Remove spaces and tabs from input file and write the result to output file.
@@ -29,4 +29,4 @@ RC_t text_editor__remove_spaces_and_tabs_from_line(char *input_line, char *outpu
  * 
  * On success, writes the modified lines into @output_file and returns SUCCESS.
  */
-RC_t text_editor__remove_spaces_and_tabs_from_file(FILE *input_file, FILE *output_file);
+RC_t text_editor__remove_spaces_and_tabs_and_comments_from_file(FILE *input_file, FILE *output_file);

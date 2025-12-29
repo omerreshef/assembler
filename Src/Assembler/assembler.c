@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
         memset(&encoded_lines, 0, sizeof(encoded_lines));
 
         /* Prepare file to pre assembler part - remove extra spaces and tabs */
-        return_code = TEXT_EDITOR__remove_spaces_and_tabs_in_given_path(input_as, temp_file);
+        return_code = TEXT_EDITOR__remove_spaces_and_tabs_and_comments_in_given_path(input_as, temp_file);
         if (return_code != SUCCESS) {
             fprintf(stderr, "Failed to remove spaces and tabs from '%s'\n", input_as);
             goto Cleanup;
@@ -177,6 +177,10 @@ Cleanup:
             free(ob_file);
             ob_file = NULL;
         }
+    }
+
+    if (return_code != SUCCESS) {
+        fprintf(stderr, "Assembly failed with error code: %d, description: %s\n", return_code, RC_description(return_code));
     }
 
     return_code = SUCCESS;

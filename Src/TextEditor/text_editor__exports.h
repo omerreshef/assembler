@@ -11,4 +11,4 @@
  * 
  * On success, writes the new file path into @new_file_path and returns SUCCESS.
  */
-RC_t TEXT_EDITOR__remove_spaces_and_tabs_in_given_path(const char *input_file_path, char *new_file_path);
+RC_t TEXT_EDITOR__remove_spaces_and_tabs_and_comments_in_given_path(const char *input_file_path, char *new_file_path);

@@ -34,6 +34,7 @@ RC_t second_pass__enter_new_extern_usage(extern_usages_t *extern_usages, int ope
 /**
  * Resolves an operand to its value and type.
  * @param operand The operand string to resolve.
+ * @param opcode The opcode which is related to the operand.
  * @param symbol_table The symbol table for resolving symbols.
  * @param operand_ic The instruction counter value of the operand.
  * @param operand_value Pointer to store the resolved operand value.
@@ -42,7 +43,7 @@ RC_t second_pass__enter_new_extern_usage(extern_usages_t *extern_usages, int ope
  * 
  * On success, fills operand_value and operand_type with the resolved values and returns SUCCESS.
  */
-RC_t second_pass__resolve_operand(char *operand, symbol_table_t *symbol_table, int operand_ic, int *operand_value, operand_type_t *operand_type, extern_usages_t *extern_usages);
+RC_t second_pass__resolve_operand(char *operand, char *opcode, symbol_table_t *symbol_table, int operand_ic, int *operand_value, operand_type_t *operand_type, extern_usages_t *extern_usages);
 
 /**
  * Encoding of a single instruction operand.
