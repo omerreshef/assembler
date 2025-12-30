@@ -111,7 +111,7 @@ RC_t second_pass__resolve_operand(char *operand, char* opcode, symbol_table_t *s
     bool is_label = false;
     int i = 0;
 
-    if (operand == NULL || symbol_table == NULL || operand_value == NULL || operand_type == NULL)
+    if (operand == NULL || symbol_table == NULL || operand_value == NULL || operand_type == NULL || opcode == NULL || extern_usages == NULL)
     {
         return_code = SECOND_PASS__RESOLVE_OPERAND__NULL_ARGUMENT;
         goto Exit;
@@ -128,6 +128,12 @@ RC_t second_pass__resolve_operand(char *operand, char* opcode, symbol_table_t *s
     else if (operand[0] == '#')
     {
         operand++; /* Skip '#' character */
+        if (strlen(operand) == 0)
+        {
+            printf("Error - empty immediate value in opcode %s\n", opcode);
+            return_code = SECOND_PASS__RESOLVE_OPERAND__EMPTY_IMMEDIATE;
+            goto Exit;
+        }
         *operand_value = (int)strtol(operand, &end_pointer, 10);
         if (*end_pointer != '\0')
         {
@@ -181,7 +187,7 @@ RC_t second_pass__resolve_operand(char *operand, char* opcode, symbol_table_t *s
         }
         if (!is_label)
         {
-            printf("Error unrecognized operand: %s in opcode %s\n", operand, opcode);
+            printf("Error - unrecognized operand: %s in opcode %s\n", operand, opcode);
             return_code = SECOND_PASS__RESOLVE_OPERAND__UNRECOGNIZED_OPERAND;
             goto Exit;
         }
@@ -515,7 +521,7 @@ RC_t SECOND_PASS__process(parsed_lines_t *parsed_lines, symbol_table_t *symbol_t
     int extern_usages_amount = 0;
     parsed_lines_t sorted_parsed_lines = {0};
 
-    if (parsed_lines == NULL || symbol_table == NULL || entries_list == NULL)
+    if (parsed_lines == NULL || symbol_table == NULL || entries_list == NULL || extern_usages == NULL || encoded_lines == NULL)
     {
         return_code = SECOND_PASS__PROCESS__NULL_ARGUMENT;
     }

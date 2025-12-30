@@ -120,7 +120,10 @@ RC_t line_parser__parse_data_numbers(char* data, parsed_line_t *parsed_line)
     /* Count commas to find number count */
     while (*data_pointer != '\0')
     {
-        if (*data_pointer == ',')
+        /* If the next character is a comma and its not the end if the string,
+        * add another number to the count.
+        */
+        if (*data_pointer == ',' && *(data_pointer+1) != '\0')
         {
             numbers_amount++;
         }
@@ -247,6 +250,12 @@ RC_t LINE_PARSER__parse_line(const char *line_buffer, parsed_line_t *parsed_line
             goto Exit;
         }
         string_length = (int)(string_end - line_pointer);
+        if (string_length == 0)
+        {
+            printf("Error - empty string was given in .string line\n");
+            return_code = LINE_PARSER__PARSE_LINE__EMPTY_STRING;
+            goto Exit;
+        }
         parsed_line->string = malloc(string_length + NULL_TERMINATOR_SIZE);
         memset(parsed_line->string, '\0', string_length + NULL_TERMINATOR_SIZE);
         EXIT_IF_NULL(parsed_line->string, LINE_PARSER__PARSE_LINE__ALLOCATION_ERROR);
