@@ -214,12 +214,25 @@ RC_t LINE_PARSER__parse_line(const char *line_buffer, parsed_line_t *parsed_line
     if (label_end != NULL)
     {
         label_length = (int)(label_end - line_pointer);
+        if (label_length == 0)
+        {
+            printf("Error - empty label was given in line: %s\n", line_buffer);
+            return_code = LINE_PARSER__PARSE_LINE__EMPTY_LABEL;
+            goto Exit;
+        }
         parsed_line->label = malloc(label_length + 1);
         EXIT_IF_NULL(parsed_line->label, LINE_PARSER__PARSE_LINE__ALLOCATION_ERROR);
         (void)memset(parsed_line->label, '\0', label_length + 1);
         (void)memcpy(parsed_line->label, line_pointer, label_length);
         line_pointer += label_length + LABEL_SKIP_LENGTH;
+        if (strlen(line_pointer) == 0)
+        {
+            printf("Error - empty line was given after label: %s\n", parsed_line->label);
+            return_code = LINE_PARSER__PARSE_LINE__EMPTY_LINE_AFTER_LABEL;
+            goto Exit;
+        }
     }
+
 
     /* Detect line type and handle the line content. */
     if (strstr(line_pointer, ".data"))

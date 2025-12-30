@@ -28,6 +28,7 @@ RC_t first_pass__detect_symbols_duplication(symbol_table_t *symbol_table, int sy
             /* Looking for the same symbol name that used twice in the same program */
             if (i != j && strcmp(symbol_table->symbols[i].symbol_name, symbol_table->symbols[j].symbol_name) == 0)
             {
+                printf("Error - symbol name duplication found: %s\n", symbol_table->symbols[i].symbol_name);
                 return_code = FIRST_PASS__DETECT_SYMBOLS_DUPLICATION__FOUND_DUPLICATION;
                 goto Exit;
             }
@@ -57,6 +58,7 @@ RC_t first_pass__detect_entries_duplication(program_entries_t *entries_list, int
             /* Looking for the same entry name that used twice in the same program */
             if (i != j && strcmp(entries_list->entries[i].entry_name, entries_list->entries[j].entry_name) == 0)
             {
+                printf("Error - entry name duplication found: %s\n", entries_list->entries[i].entry_name);
                 return_code = FIRST_PASS__DETECT_ENTRIES_DUPLICATION__FOUND_DUPLICATION;
                 goto Exit;
             }
@@ -164,6 +166,8 @@ Exit:
 RC_t FIRST_PASS__process(char *input_file_path, int *instruction_counter, int *data_counter, parsed_lines_t *parsed_lines, symbol_table_t *symbol_table, program_entries_t *entries_list, encoded_lines_t *encoded_lines)
 {
     RC_t return_code = UNINITIALIZED;
+    RC_t symbols_check_rc = UNINITIALIZED;
+    RC_t entries_check_rc = UNINITIALIZED;
     FILE *input_file = NULL;
     bool is_line_valid = true;
     char line_buffer[MAX_LINE_LENGTH] = {0};
@@ -222,7 +226,9 @@ RC_t FIRST_PASS__process(char *input_file_path, int *instruction_counter, int *d
                 return_code != LINE_PARSER__PARSE_INSTRUCTION_OPERANDS__NO_OPERANDS_EXPECTED &&
                 return_code != LINE_PARSER__PARSE_DATA_NUMBERS__NO_DATA_VALUES &&
                 return_code != LINE_PARSER__PARSE_DATA_NUMBERS__INVALID_DATA_VALUE &&
-                return_code != LINE_PARSER__PARSE_LINE__EMPTY_STRING)
+                return_code != LINE_PARSER__PARSE_LINE__EMPTY_STRING &&
+                return_code != LINE_PARSER__PARSE_LINE__EMPTY_LABEL &&
+                return_code != LINE_PARSER__PARSE_LINE__EMPTY_LINE_AFTER_LABEL)
             {
                 goto Exit;
             }
@@ -328,8 +334,13 @@ RC_t FIRST_PASS__process(char *input_file_path, int *instruction_counter, int *d
     }
 
     /* Exit in case of symbol or entry multiple uses */
-    EXIT_ON_ERROR(first_pass__detect_symbols_duplication(symbol_table, symbol_index), &return_code);
-    EXIT_ON_ERROR(first_pass__detect_entries_duplication(entries_list, entry_index), &return_code);
+    symbols_check_rc = first_pass__detect_symbols_duplication(symbol_table, symbol_index);
+    entries_check_rc = first_pass__detect_entries_duplication(entries_list, entry_index);
+    if (symbols_check_rc != SUCCESS || entries_check_rc != SUCCESS)
+    {
+        return_code = FIRST_PASS__PROCESS__DUPLICATE_SYMBOL_OR_ENTRY_ERROR;
+        goto Exit;
+    }
 
     for (line_index = 0; line_index < symbol_index; line_index++)
     {
