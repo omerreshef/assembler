@@ -194,6 +194,8 @@ RC_t LINE_PARSER__parse_line(const char *line_buffer, parsed_line_t *parsed_line
     char *extern_name = NULL;
     char *entry_name = NULL;
     bool is_opcode = false;
+    bool is_instruction = false;
+    bool is_register = false;
 
     if (line_buffer == NULL || parsed_line == NULL)
     {
@@ -225,10 +227,21 @@ RC_t LINE_PARSER__parse_line(const char *line_buffer, parsed_line_t *parsed_line
         (void)memset(parsed_line->label, '\0', label_length + 1);
         (void)memcpy(parsed_line->label, line_pointer, label_length);
         line_pointer += label_length + LABEL_SKIP_LENGTH;
+        /* Check if anything is left in the line after the label */
         if (strlen(line_pointer) == 0)
         {
             printf("Error - empty line was given after label: %s\n", parsed_line->label);
             return_code = LINE_PARSER__PARSE_LINE__EMPTY_LINE_AFTER_LABEL;
+            goto Exit;
+        }
+        /* Check if the label name is valid (not a name of register etc.) */
+        EXIT_ON_ERROR(ARCHITECTURE__is_register(parsed_line->label, &is_register), &return_code);
+        EXIT_ON_ERROR(ARCHITECTURE__is_opcode(parsed_line->label, &is_opcode), &return_code);
+        EXIT_ON_ERROR(ARCHITECTURE__is_instruction(parsed_line->label, &is_instruction), &return_code);
+        if (is_register || is_opcode || is_instruction)
+        {
+            printf("Error: Label name is a name of register, opcode or instruction: %s\n", parsed_line->label);
+            return_code = LINE_PARSER__PARSE_LINE__INVALID_LABEL_NAME;
             goto Exit;
         }
     }

@@ -228,7 +228,8 @@ RC_t FIRST_PASS__process(char *input_file_path, int *instruction_counter, int *d
                 return_code != LINE_PARSER__PARSE_DATA_NUMBERS__INVALID_DATA_VALUE &&
                 return_code != LINE_PARSER__PARSE_LINE__EMPTY_STRING &&
                 return_code != LINE_PARSER__PARSE_LINE__EMPTY_LABEL &&
-                return_code != LINE_PARSER__PARSE_LINE__EMPTY_LINE_AFTER_LABEL)
+                return_code != LINE_PARSER__PARSE_LINE__EMPTY_LINE_AFTER_LABEL &&
+                return_code != LINE_PARSER__PARSE_LINE__INVALID_LABEL_NAME)
             {
                 goto Exit;
             }

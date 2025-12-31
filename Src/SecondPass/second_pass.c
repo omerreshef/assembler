@@ -51,6 +51,7 @@ RC_t second_pass__finalize_symbol_table(symbol_table_t *symbol_table, program_en
         /* The symbol that related to the entry was not found */
         if (!found_symbol)
         {
+            printf("Error - entry symbol not found: %s\n", entries_list->entries[entry_index].entry_name);
             return_code = SECOND_PASS__FINALIZE_SYMBOL_TABLE__SYMBOL_NOT_FOUND;
             goto Exit;
         }
