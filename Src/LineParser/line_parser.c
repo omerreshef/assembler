@@ -104,6 +104,8 @@ RC_t line_parser__parse_data_numbers(char* data, parsed_line_t *parsed_line)
 {
     RC_t return_code = UNINITIALIZED;
     char *data_pointer = data;
+    char *previous_char = data_pointer - 1;
+    char *next_char = data_pointer + 1;
     int numbers_amount = 0;
     int token_index = 0;
     int *numbers = NULL;
@@ -116,6 +118,53 @@ RC_t line_parser__parse_data_numbers(char* data, parsed_line_t *parsed_line)
         return_code = LINE_PARSER__PARSE_DATA_NUMBERS__NULL_ARGUMENT;
         goto Exit;
     }
+
+    if (strlen(data) == 0)
+    {
+        printf("Error: No data values found in .data declaration\n");
+        return_code = LINE_PARSER__PARSE_DATA_NUMBERS__NO_DATA_VALUES;
+        goto Exit;
+    }
+
+    /* Detect empty tokens such as consecutive commas,
+     * Examples: ",1,2", "1,2,3,", "1,2,,3", "1,  ,2".
+     */
+    {
+        while (*data_pointer != '\0')
+        {
+            if (*data_pointer == ',')
+            {
+                /* Check previous non-space/tab character */
+                previous_char = data_pointer - 1;
+                while (previous_char >= data && (*previous_char == ' ' || *previous_char == '\t'))
+                {
+                    previous_char--;
+                }
+                if (previous_char < data || *previous_char == ',')
+                {
+                    printf("Invalid data value in .data declaration: %s\n", data);
+                    return_code = LINE_PARSER__PARSE_DATA_NUMBERS__INVALID_DATA_VALUE;
+                    goto Exit;
+                }
+
+                /* Check next non-space/tab character */
+                next_char = data_pointer + 1;
+                while (*next_char != '\0' && (*next_char == ' ' || *next_char == '\t'))
+                {
+                    next_char++;
+                }
+                if (*next_char == '\0' || *next_char == ',')
+                {
+                    printf("Invalid data value in .data declaration: %s\n", data);
+                    return_code = LINE_PARSER__PARSE_DATA_NUMBERS__INVALID_DATA_VALUE;
+                    goto Exit;
+                }
+            }
+            data_pointer++;
+        }
+    }
+
+    data_pointer = data;
 
     /* Count commas to find number count */
     while (*data_pointer != '\0')
@@ -132,13 +181,6 @@ RC_t line_parser__parse_data_numbers(char* data, parsed_line_t *parsed_line)
 
     numbers_amount += 1; /* Account for the last number */
 
-    if (numbers_amount == 0) 
-    {
-        printf("Error: No data values found in .data declaration: %s\n", data);
-        return_code = LINE_PARSER__PARSE_DATA_NUMBERS__NO_DATA_VALUES;
-        goto Exit;
-    }
-
     numbers = malloc((numbers_amount) * sizeof(int));
     EXIT_IF_NULL(numbers, LINE_PARSER__PARSE_DATA_NUMBERS__ALLOCATION_ERROR);
 
@@ -151,6 +193,13 @@ RC_t line_parser__parse_data_numbers(char* data, parsed_line_t *parsed_line)
 
     /* Parse all the given numbers */
     token = strtok(numbers_copy, ",");
+    if (token == NULL)
+    {
+        /* No valid tokens found (e.g. "," or empty) */
+        printf("Invalid data value in .data declaration: %s\n", numbers_copy);
+        return_code = LINE_PARSER__PARSE_DATA_NUMBERS__INVALID_DATA_VALUE;
+        goto Exit;
+    }
     while (token != NULL && token_index < numbers_amount) {
         numbers[token_index] = (int)strtol(token, &end_pointer, 10);
         if (end_pointer == token || *end_pointer != '\0')
@@ -251,7 +300,7 @@ RC_t LINE_PARSER__parse_line(const char *line_buffer, parsed_line_t *parsed_line
     if (strstr(line_pointer, ".data"))
     {
         parsed_line->line_type = LINE_TYPE__DATA;
-        line_pointer += strlen(".data") + SPACE_CHARACTER_LEN;
+        line_pointer += strlen(".data");
         
         EXIT_ON_ERROR(line_parser__parse_data_numbers(line_pointer, parsed_line), &return_code);
     } 

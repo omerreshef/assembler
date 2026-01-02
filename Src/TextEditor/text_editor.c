@@ -52,7 +52,7 @@ RC_t text_editor__remove_spaces_and_tabs_and_comments_from_line(char *input_line
     size_t len_without_comments = 0;
     char temporarty_line[MAX_LINE_LENGTH] = {0};
     char cleaned_line[MAX_LINE_LENGTH] = {0};
-    
+
     if (input_line == NULL || output_line == NULL)
     {
         return_code = TEXT_EDITOR__REMOVE_SPACES_AND_TABS_AND_COMMENTS_FROM_LINE__NULL_ARGUMENT;
