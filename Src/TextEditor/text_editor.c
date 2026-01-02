@@ -10,7 +10,23 @@ RC_t text_editor__remove_spaces_and_tabs_near_comma(char *input_line, char *outp
     size_t input_index = 0, output_index = 0;
 
     if (input_line == NULL || output_line == NULL)
+    {
         return TEXT_EDITOR__REMOVE_SPACES_AND_TABS_NEAR_COMMA__NULL_ARGUMENT;
+    }
+
+    while (input_line[input_index] != '\0' && input_line[input_index] != ' ' && input_line[input_index] != '\t')
+    {
+        output_line[output_index] = input_line[input_index];
+        input_index++;
+        output_index++;
+    }
+
+    if (input_line[input_index] != '\0')
+    {
+        output_line[output_index] = input_line[input_index];
+        input_index++;
+        output_index++;
+    }
 
     while (input_line[input_index] != '\0')
     {

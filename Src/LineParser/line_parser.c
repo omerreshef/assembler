@@ -397,6 +397,7 @@ RC_t LINE_PARSER__parse_line(const char *line_buffer, parsed_line_t *parsed_line
 
         if (opcode_length > MAX_OPCODE_LEN)
         {
+            printf("Invalid syntax in the line %s\n", line_buffer);
             return_code = LINE_PARSER__PARSE_LINE__TOO_LONG_OPCODE;
             goto Exit;
         }
