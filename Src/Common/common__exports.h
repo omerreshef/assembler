@@ -25,7 +25,7 @@ typedef enum RC_t {
     }                                                      \
 } while (0)
 
-#define MAX_LINE_LENGTH 100
+#define MAX_LINE_LENGTH 80
 #define MAX_FILE_PATH_LENGTH 256
 #define MAX_LINES_IN_FILE 1024
 

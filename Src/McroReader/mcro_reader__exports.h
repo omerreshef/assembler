@@ -1,7 +1,7 @@
 #pragma once
 #include "common__exports.h"
 
-#define MAX_MCRO_NAME_LENGTH 100
+#define MAX_MCRO_NAME_LENGTH 79
 #define MAX_MCROS_COUNT 100
 #define MAX_MCRO_LENGTH 1000
 

@@ -271,6 +271,14 @@ RC_t LINE_PARSER__parse_line(const char *line_buffer, parsed_line_t *parsed_line
             return_code = LINE_PARSER__PARSE_LINE__EMPTY_LABEL;
             goto Exit;
         }
+        /* The character immediately before ':' must be part of the label
+         * (not a space/tab). Example of invalid label syntax: "LABEL :" */
+        if (label_length > 0 && (label_end[-1] == ' ' || label_end[-1] == '\t'))
+        {
+            printf("Error - space before ':' in label declaration: %s\n", line_buffer);
+            return_code = LINE_PARSER__PARSE_LINE__SPACE_BEFORE_LABEL;
+            goto Exit;
+        }
         parsed_line->label = malloc(label_length + 1);
         EXIT_IF_NULL(parsed_line->label, LINE_PARSER__PARSE_LINE__ALLOCATION_ERROR);
         (void)memset(parsed_line->label, '\0', label_length + 1);

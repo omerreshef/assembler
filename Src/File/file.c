@@ -74,6 +74,8 @@ Exit:
 RC_t FILE__read_line(FILE *file_pointer, char *buffer, size_t buffer_size)
 {
     RC_t return_code = UNINITIALIZED;
+    size_t line_length = 0;
+    int character = 0;
 
     if (file_pointer == NULL || buffer == NULL || buffer_size == 0)
     {
@@ -92,6 +94,27 @@ RC_t FILE__read_line(FILE *file_pointer, char *buffer, size_t buffer_size)
         {
             return_code = FILE__READ_LINE__FGETS_ERROR;
         }
+        goto Exit;
+    }
+
+    /* If the buffer was completely filled and there's no '\n', the line
+     * was longer than the provided buffer (truncated by fgets). Treat this as
+     * an error: consume the rest of the line from the stream and return
+     * FILE__READ_LINE__LINE_TOO_LONG.
+     */
+    line_length = strlen(buffer);
+    if (line_length == buffer_size - 1 && buffer[line_length - 1] != '\n')
+    {
+        /* consume remainder of the long line to position the stream at the
+         * next line boundary. */
+        character = 0;
+        character = fgetc(file_pointer);
+        while (character != EOF && character != '\n')
+        {
+            character = fgetc(file_pointer);
+        }
+        printf("Error - line '%s' too long to read into buffer of size %ld\n", buffer, buffer_size);
+        return_code = FILE__READ_LINE__LINE_TOO_LONG;
         goto Exit;
     }
 
