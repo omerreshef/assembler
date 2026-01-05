@@ -37,6 +37,7 @@ int main(int argc, char *argv[])
     program_entries_t entries_list = {0};
     extern_usages_t extern_usages = {0};
     encoded_lines_t encoded_lines = {0};
+    mcros_collection_t mcros = {0};
 
     if (argc < 2) {
         printf("No input files specified. Usage: %s <asFile1> [asFile2 ...]\n", argv[0]);
@@ -96,7 +97,7 @@ int main(int argc, char *argv[])
         }
 
         /* Pre assmbler part - analyze macros */
-        return_code = MCRO_READER__convert_mcros_to_instructions(temp_file, am_file);
+        return_code = MCRO_READER__convert_mcros_to_instructions(temp_file, am_file, &mcros);
         if (return_code != SUCCESS) {
             fprintf(stderr, "Failed the preprocessing part on %s.\n", input_as);
             goto Cleanup;
@@ -144,7 +145,7 @@ int main(int argc, char *argv[])
 Cleanup:
 
         /* free per-file allocated memory for parsed/encoded structures */
-        (void)MEMORY_CLEANER__clean_allocated_memory(&parsed_lines, &encoded_lines, &extern_usages, &symbol_table, &entries_list);
+        (void)MEMORY_CLEANER__clean_allocated_memory(&parsed_lines, &encoded_lines, &extern_usages, &symbol_table, &entries_list, &mcros);
 
         /* free filename buffers */
         if (input_as != NULL)
@@ -210,7 +211,7 @@ Exit:
     }
 
     /* free per-file allocated memory for parsed/encoded structures */
-    (void)MEMORY_CLEANER__clean_allocated_memory(&parsed_lines, &encoded_lines, &extern_usages, &symbol_table, &entries_list);
+    (void)MEMORY_CLEANER__clean_allocated_memory(&parsed_lines, &encoded_lines, &extern_usages, &symbol_table, &entries_list, &mcros);
 
     return return_code;
 }

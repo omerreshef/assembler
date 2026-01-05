@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 #include "file__exports.h"
 #include "architecture__exports.h"
+#include "line_parser__exports.h"
 
 #include "mcro_reader__exports.h"
 #include "mcro_reader__internals.h"
@@ -40,7 +42,52 @@ Exit:
     return return_code;
 }
 
-RC_t mcro_reader__read_mcros_from_file(const char *file_path, mcro_t *mcros)
+RC_t mcro_reader__count_macros_amount(const char *file_path, int *mcros_amount)
+{
+    RC_t return_code = UNINITIALIZED;
+    FILE *file_pointer = NULL;
+    char line_buffer[MAX_LINE_LENGTH] = {0};
+    int count = 0;
+
+    if (file_path == NULL || mcros_amount == NULL)
+    {
+        return_code = MCRO_READER__COUNT_MACROS_AMOUNT__NULL_ARGUMENT;
+        goto Exit;
+    }
+
+    EXIT_ON_ERROR(FILE__open(file_path, &file_pointer, "r"), &return_code);
+
+    while (1)
+    {
+        memset(line_buffer, 0, sizeof(line_buffer));
+        return_code = FILE__read_line(file_pointer, line_buffer, sizeof(line_buffer));
+
+        if (return_code == FILE__READ_LINE__EOF_REACHED)
+        {
+            break;
+        }
+        else if (return_code != SUCCESS)
+        {
+            goto Exit;
+        }
+
+        if (strncmp(line_buffer, MCRO_START_DEFINITION, strlen(MCRO_START_DEFINITION)) == 0)
+        {
+            count++;
+        }
+    }
+
+    *mcros_amount = count/2; /* each macro has a start and end definition */
+    return_code = SUCCESS;
+Exit:
+    if (file_pointer != NULL)
+    {
+        FILE__close(file_pointer);
+    }
+    return return_code;
+}
+
+RC_t mcro_reader__read_mcros_from_file(const char *file_path, mcros_collection_t *mcros)
 {
     RC_t return_code = UNINITIALIZED;
     FILE *file_pointer = NULL;
@@ -52,12 +99,19 @@ RC_t mcro_reader__read_mcros_from_file(const char *file_path, mcro_t *mcros)
     bool is_instruction = false;
     bool is_opcode = false;
     bool is_register = false;
+    int mcros_amount = 0;
 
     if (file_path == NULL)
     {
         return_code = MCRO_READER__READ_MCROS_FROM_FILE__NULL_ARGUMENT;
         goto Exit;
     }
+
+    EXIT_ON_ERROR(mcro_reader__count_macros_amount(file_path, &mcros_amount), &return_code);
+    mcros->mcros_amount = mcros_amount;
+    mcros->mcros = malloc(sizeof(mcro_t) * mcros_amount);
+    EXIT_IF_NULL(mcros->mcros, MCRO_READER__READ_MCROS_FROM_FILE__ALLOCATION_FAILED);
+    memset(mcros->mcros, 0, sizeof(mcro_t) * mcros_amount);
 
     EXIT_ON_ERROR(FILE__open(file_path, &file_pointer, "r"), &return_code);
 
@@ -82,6 +136,7 @@ RC_t mcro_reader__read_mcros_from_file(const char *file_path, mcro_t *mcros)
             if (line_buffer[strlen(MCRO_START_DEFINITION)] != ' ')
             {
                 /* Invalid macro definition line */
+                printf("Invalid macro start definition: %s\n", line_buffer);
                 return_code = MCRO_READER__INVALID_MCRO_START_DEFINITION;
                 goto Exit;
             }
@@ -101,12 +156,17 @@ RC_t mcro_reader__read_mcros_from_file(const char *file_path, mcro_t *mcros)
                 goto Exit;
             }
 
-            mcro_ptr = &mcros[current_mcro_index];
-            strncpy(mcro_ptr->name, mcro_name, MAX_MCRO_NAME_LENGTH - 1);
+            mcro_ptr = &mcros->mcros[current_mcro_index];
+            mcro_ptr->name = malloc(strlen(mcro_name) + NULL_TERMINATOR_SIZE);
+            EXIT_IF_NULL(mcro_ptr->name, MCRO_READER__READ_MCROS_FROM_FILE__ALLOCATION_FAILED);
+            memset(mcro_ptr->name, 0, strlen(mcro_name) + NULL_TERMINATOR_SIZE);
+            strncpy(mcro_ptr->name, mcro_name, strlen(mcro_name));
+
+            mcro_ptr->body = malloc(MAX_MCRO_LENGTH);
+            memset(mcro_ptr->body, 0, MAX_MCRO_LENGTH);
             mcro_body_ptr = mcro_ptr->body;
-            memset(mcro_body_ptr, 0, MAX_MCRO_LENGTH);
-            
-            if (current_mcro_index >= MAX_MCROS_COUNT)
+
+            if (current_mcro_index >= mcros_amount)
             {
                 /* Reached maximum number of macros */
                 return_code = MCRO_READER__MAX_MCROS_EXCEEDED;
@@ -147,12 +207,11 @@ Exit:
     return return_code; 
 }
 
-RC_t MCRO_READER__convert_mcros_to_instructions(const char *input_file_path, const char *output_file_path)
+RC_t MCRO_READER__convert_mcros_to_instructions(const char *input_file_path, const char *output_file_path, mcros_collection_t *mcros)
 {
     RC_t return_code = UNINITIALIZED;
     FILE *input_file_pointer = NULL;
     FILE *output_file_pointer = NULL;
-    mcro_t mcros[MAX_MCROS_COUNT] = {0};
     char line_buffer[MAX_LINE_LENGTH] = {0};
     bool converted_mcro_to_instructions = false;
     bool is_inside_mcro = false;
@@ -165,6 +224,7 @@ RC_t MCRO_READER__convert_mcros_to_instructions(const char *input_file_path, con
     }
 
     EXIT_ON_ERROR(mcro_reader__read_mcros_from_file(input_file_path, mcros), &return_code);
+    printf("lalala%d\n", mcros->mcros_amount);
     EXIT_ON_ERROR(FILE__open(input_file_path, &input_file_pointer, "r"), &return_code);
     EXIT_ON_ERROR(FILE__open(output_file_path, &output_file_pointer, "w"), &return_code);
 
@@ -202,17 +262,17 @@ RC_t MCRO_READER__convert_mcros_to_instructions(const char *input_file_path, con
         }
 
         /* Check if the current line matches any macro name */
-        for (i = 0; i < MAX_MCROS_COUNT; i++)
+        for (i = 0; i < mcros->mcros_amount; i++)
         {
-            if (strlen(mcros[i].name) == 0)
+            if (strlen(mcros->mcros[i].name) == 0)
             {
                 continue;
             }
 
             /* If the current line matches a macro name, copy its body to the output */
-            if (strncmp(line_buffer, mcros[i].name, MAX_MCRO_NAME_LENGTH) == 0)
+            if (strncmp(line_buffer, mcros->mcros[i].name, MAX_MCRO_NAME_LENGTH) == 0)
             {
-                fprintf(output_file_pointer, "%s", mcros[i].body);
+                fprintf(output_file_pointer, "%s", mcros->mcros[i].body);
                 converted_mcro_to_instructions = true;
                 break;
             }

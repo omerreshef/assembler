@@ -4,7 +4,7 @@
 
 #include "memory_cleaner__exports.h"
 
-void MEMORY_CLEANER__clean_allocated_memory(parsed_lines_t *parsed_lines, encoded_lines_t *encoded_lines, extern_usages_t *extern_usages, symbol_table_t *symbol_table, program_entries_t *entries_list)
+void MEMORY_CLEANER__clean_allocated_memory(parsed_lines_t *parsed_lines, encoded_lines_t *encoded_lines, extern_usages_t *extern_usages, symbol_table_t *symbol_table, program_entries_t *entries_list, mcros_collection_t *mcros)
 {
     int i = 0;
     int l = 0;
@@ -147,6 +147,30 @@ void MEMORY_CLEANER__clean_allocated_memory(parsed_lines_t *parsed_lines, encode
             free(extern_usages->extern_usage);
             extern_usages->extern_usage = NULL;
             extern_usages->extern_usages_amount = 0;
+        }
+    }
+
+    if (mcros != NULL)
+    {
+        if (mcros->mcros != NULL)
+        {
+            /* Free every allocated macro object */
+            for (i = 0; i < mcros->mcros_amount; i++)
+            {
+                if (mcros->mcros[i].name != NULL)
+                {
+                    free(mcros->mcros[i].name);
+                    mcros->mcros[i].name = NULL;
+                }
+                if (mcros->mcros[i].body != NULL)
+                {
+                    free(mcros->mcros[i].body);
+                    mcros->mcros[i].body = NULL;
+                }
+            }
+            free(mcros->mcros);
+            mcros->mcros = NULL;
+            mcros->mcros_amount = 0;
         }
     }
 
