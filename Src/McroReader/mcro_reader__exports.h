@@ -8,6 +8,7 @@
 typedef struct mcro_t {
     char *name;
     char *body;
+    int body_size;
 } mcro_t;
 
 typedef struct mcros_collection_t {

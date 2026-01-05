@@ -42,6 +42,81 @@ Exit:
     return return_code;
 }
 
+RC_t mcro_reader__calculate_mcro_size(const char *file_path, const char *mcro_name, int *mcro_size)
+{
+    RC_t return_code = UNINITIALIZED;
+    FILE *file_pointer = NULL;
+    char line_buffer[MAX_LINE_LENGTH] = {0};
+    bool is_macro_end = false;
+    bool is_macro_start = false;
+    int size = 0;
+
+    if (file_path == NULL || mcro_name == NULL || mcro_size == NULL)
+    {
+        return_code = MCRO_READER__CALCULATE_MCRO_SIZE__NULL_ARGUMENT;
+        goto Exit;
+    }
+
+    EXIT_ON_ERROR(FILE__open(file_path, &file_pointer, "r"), &return_code);
+
+    while (1)
+    {
+        memset(line_buffer, 0, sizeof(line_buffer));
+        return_code = FILE__read_line(file_pointer, line_buffer, sizeof(line_buffer));
+
+        if (return_code == FILE__READ_LINE__EOF_REACHED)
+        {
+            break;
+        }
+        else if (return_code != SUCCESS)
+        {
+            goto Exit;
+        }
+
+        if (!is_macro_start)
+        {
+            /* Looking for the start of the macro definition */
+            if (strncmp(line_buffer, MCRO_START_DEFINITION, strlen(MCRO_START_DEFINITION)) == 0)
+            {
+                char extracted_mcro_name[MAX_MCRO_NAME_LENGTH] = {0};
+                EXIT_ON_ERROR(mcro_reader__extract_mcro_name(line_buffer, extracted_mcro_name), &return_code);
+                if (strcmp(extracted_mcro_name, mcro_name) == 0)
+                {
+                    is_macro_start = true;
+                }
+            }
+            continue; /* Continue to next line until macro start is found */
+        }
+
+        if (strncmp(line_buffer, MCRO_END_DEFINITION, strlen(MCRO_END_DEFINITION)) == 0)
+        {
+            is_macro_end = true;
+            break;
+        }
+        if (is_macro_start)
+        {
+            /* Counting lines within the macro definition */
+            size += strlen(line_buffer) + 1; /* +1 for newline character */
+        }
+    }
+
+    if (!is_macro_end)
+    {
+        return_code = MCRO_READER__CALCULATE_MCRO_SIZE__MACRO_NOT_FOUND;
+        goto Exit;
+    }
+
+    *mcro_size = size + NULL_TERMINATOR_SIZE;
+
+Exit:
+    if (file_pointer != NULL)
+    {
+        FILE__close(file_pointer);
+    }
+    
+    return return_code;
+}
+
 RC_t mcro_reader__count_macros_amount(const char *file_path, int *mcros_amount)
 {
     RC_t return_code = UNINITIALIZED;
@@ -95,11 +170,12 @@ RC_t mcro_reader__read_mcros_from_file(const char *file_path, mcros_collection_t
     char line_buffer[MAX_LINE_LENGTH] = {0};
     char mcro_name[MAX_LINE_LENGTH] = {0};
     char *mcro_body_ptr = NULL;
-    int current_mcro_index = 0;
     bool is_instruction = false;
     bool is_opcode = false;
     bool is_register = false;
+    int current_mcro_index = 0;
     int mcros_amount = 0;
+    int mcro_size = 0;
 
     if (file_path == NULL)
     {
@@ -162,8 +238,13 @@ RC_t mcro_reader__read_mcros_from_file(const char *file_path, mcros_collection_t
             memset(mcro_ptr->name, 0, strlen(mcro_name) + NULL_TERMINATOR_SIZE);
             strncpy(mcro_ptr->name, mcro_name, strlen(mcro_name));
 
-            mcro_ptr->body = malloc(MAX_MCRO_LENGTH);
-            memset(mcro_ptr->body, 0, MAX_MCRO_LENGTH);
+            EXIT_ON_ERROR(mcro_reader__calculate_mcro_size(file_path, mcro_ptr->name, &mcro_size), &return_code);
+
+            printf("macro size - %d\n", mcro_size);
+
+            mcro_ptr->body_size = mcro_size;
+            mcro_ptr->body = malloc(mcro_size);
+            memset(mcro_ptr->body, 0, mcro_size);
             mcro_body_ptr = mcro_ptr->body;
 
             if (current_mcro_index >= mcros_amount)
@@ -189,8 +270,8 @@ RC_t mcro_reader__read_mcros_from_file(const char *file_path, mcros_collection_t
                     goto Exit;
                 }
 
-                strncpy(mcro_body_ptr + strlen(mcro_body_ptr), line_buffer, MAX_MCRO_LENGTH - strlen(mcro_body_ptr) - 1);
-                strncat(mcro_body_ptr, "\n", MAX_MCRO_LENGTH - strlen(mcro_body_ptr) - 1);
+                strncpy(mcro_body_ptr + strlen(mcro_body_ptr), line_buffer, mcro_ptr->body_size - strlen(mcro_body_ptr) - 1);
+                strncat(mcro_body_ptr, "\n", mcro_ptr->body_size - strlen(mcro_body_ptr) - 1);
 
                 memset(line_buffer, 0, sizeof(line_buffer));
                 EXIT_ON_ERROR(FILE__read_line(file_pointer, line_buffer, sizeof(line_buffer)), &return_code);
@@ -224,7 +305,6 @@ RC_t MCRO_READER__convert_mcros_to_instructions(const char *input_file_path, con
     }
 
     EXIT_ON_ERROR(mcro_reader__read_mcros_from_file(input_file_path, mcros), &return_code);
-    printf("lalala%d\n", mcros->mcros_amount);
     EXIT_ON_ERROR(FILE__open(input_file_path, &input_file_pointer, "r"), &return_code);
     EXIT_ON_ERROR(FILE__open(output_file_path, &output_file_pointer, "w"), &return_code);
 

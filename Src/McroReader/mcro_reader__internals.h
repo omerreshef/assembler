@@ -13,10 +13,21 @@
  */
 RC_t mcro_reader__extract_mcro_name(const char *line_buffer, char *mcro_name);
 
+
+/**
+ * Calculate the size of a macro in the given file.
+ * @file_path: path to the file containing macro definitions.
+ * @mcro_name: name of the macro to calculate the size for.
+ * @mcro_size: pointer to store the calculated macro size at.
+ * On success, set macro size in mcro_size and returns SUCCESS.
+ */
+RC_t mcro_reader__calculate_mcro_size(const char *file_path, const char *mcro_name, int *mcro_size);
+
 /**
  * Find macros amount in a given assembly file.
  * @file_path: path to the file containing macro definitions.
  * @mcros_amount: pointer to store the mcros amount at.
+ * On success, set macros amount in mcros_amount and returns SUCCESS.
  */
 RC_t mcro_reader__count_macros_amount(const char *file_path, int *mcros_amount);
 
