@@ -240,8 +240,6 @@ RC_t mcro_reader__read_mcros_from_file(const char *file_path, mcros_collection_t
 
             EXIT_ON_ERROR(mcro_reader__calculate_mcro_size(file_path, mcro_ptr->name, &mcro_size), &return_code);
 
-            printf("macro size - %d\n", mcro_size);
-
             mcro_ptr->body_size = mcro_size;
             mcro_ptr->body = malloc(mcro_size);
             memset(mcro_ptr->body, 0, mcro_size);
