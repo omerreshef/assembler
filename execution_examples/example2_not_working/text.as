@@ -1,0 +1,27 @@
+.entry      LIST
+.extern     W
+EMPTY_LABEL:  
+EMPTY_STRING: .string ""
+EMPTY_DATA : .data 
+mov: .string "invalid label name"
+MAIN:       add r3, LIST
+LOOP:       prn #48
+            lea W, r6
+            inc r6
+            mov r3, K
+            sub r4, r4
+            bne END
+            cmp K, #-6
+            .string "no closing quote
+            bne %END
+            dec W
+.entry      MAIN
+            jmp %LOOP
+            add L3, L3
+END  :        stop
+
+STR:       .string "abc"d"
+LIST:       .data 6,-9
+            .data -100
+K:          .data 31
+.extern L3
