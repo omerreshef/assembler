@@ -230,7 +230,8 @@ RC_t FIRST_PASS__process(char *input_file_path, int *instruction_counter, int *d
                 return_code != LINE_PARSER__PARSE_LINE__EMPTY_LABEL &&
                 return_code != LINE_PARSER__PARSE_LINE__EMPTY_LINE_AFTER_LABEL &&
                 return_code != LINE_PARSER__PARSE_LINE__INVALID_LABEL_NAME &&
-                return_code != LINE_PARSER__PARSE_LINE__SPACE_BEFORE_LABEL)
+                return_code != LINE_PARSER__PARSE_LINE__SPACE_BEFORE_LABEL &&
+                return_code != LINE_PARSER__PARSE_LINE__INVALID_CHARACTERS_AFTER_STRING)
             {
                 goto Exit;
             }

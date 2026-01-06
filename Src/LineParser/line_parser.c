@@ -333,6 +333,13 @@ RC_t LINE_PARSER__parse_line(const char *line_buffer, parsed_line_t *parsed_line
             goto Exit;
         }
         string_length = (int)(string_end - line_pointer);
+        /* Check if there are more characters after closing quote */
+        if (string_end[1] != '\0')
+        {
+            printf("Error - extra characters found after closing quote in .string line: %s\n", line_buffer);
+            return_code = LINE_PARSER__PARSE_LINE__INVALID_CHARACTERS_AFTER_STRING;
+            goto Exit;
+        }
         if (string_length == 0)
         {
             printf("Error - empty string was given in .string line\n");
